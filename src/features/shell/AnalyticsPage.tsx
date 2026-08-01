@@ -1,7 +1,11 @@
-import { useT } from '../../i18n';
-import { EmptyState } from '../../components/EmptyState';
+import { lazy, Suspense } from 'react';
+
+const LazyAnalyticsPage = lazy(() => import('../analytics/AnalyticsPage'));
 
 export function AnalyticsPage() {
-  const t = useT();
-  return <EmptyState title={t('placeholder.analytics')} />;
+  return (
+    <Suspense fallback={<div className="analytics-loading" />}>
+      <LazyAnalyticsPage />
+    </Suspense>
+  );
 }

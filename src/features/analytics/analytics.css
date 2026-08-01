@@ -1,0 +1,233 @@
+/* Analytics Page Styles - Using Logical Properties and CSS Tokens */
+
+.analytics-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.analytics-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analytics-page-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.analytics-layout-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.analytics-stat-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.analytics-section-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.analytics-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Charts Grid */
+.analytics-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .analytics-charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Year Heatmap */
+.year-heatmap-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.year-heatmap-grid {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  padding-block: var(--space-2);
+}
+
+.heatmap-week-column {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.heatmap-cell-empty {
+  background-color: var(--ink-sunken);
+  border: 1px solid var(--rule);
+}
+
+.heatmap-cell-active {
+  border: none;
+}
+
+/* Streak Panel */
+.streak-panel-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.streak-main-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.streak-hero {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.streak-count-display {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.streak-state-badge {
+  font-size: 14px;
+  font-weight: 500;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius);
+  background-color: var(--ink-sunken);
+  border: 1px solid var(--rule-strong);
+  color: var(--text-muted);
+}
+
+.streak-state-active {
+  color: var(--trace);
+  border-color: var(--trace-dim);
+}
+
+.streak-state-at_risk {
+  color: var(--text);
+  border-color: var(--rule-strong);
+}
+
+.streak-state-broken {
+  color: var(--text-muted);
+  border-color: var(--rule);
+}
+
+.streak-rule-notice {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+.streak-metrics-row {
+  display: flex;
+  gap: var(--space-6);
+  padding-block: var(--space-3);
+  border-block-start: 1px solid var(--rule);
+  border-block-end: 1px solid var(--rule);
+}
+
+.streak-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.streak-metric-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.streak-metric-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.streak-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.streak-history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.streak-history-empty {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.streak-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.streak-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-1);
+  font-size: 13px;
+  border-block-end: 1px solid var(--rule);
+}
+
+.streak-history-date {
+  color: var(--text-muted);
+}
+
+.streak-history-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
