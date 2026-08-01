@@ -55,6 +55,7 @@ export interface AppActions {
   resetAll(): void;
   rehydrateFromStorage(now: number): void;
   clearLastCompletion(): void;
+  acknowledgeCompletion(): void;
   clearRecovered(): void;
 }
 
@@ -505,6 +506,10 @@ export function createAppStore(
       set({ lastCompletion: null });
     },
 
+    acknowledgeCompletion(): void {
+      set({ lastCompletion: null });
+    },
+
     clearRecovered(): void {
       set({ recovered: false });
     },
@@ -541,6 +546,7 @@ export const useTaskCount = () => useAppStore((s) => s.tasks.filter((t) => t.del
 export const useSessionCount = () => useAppStore((s) => s.sessions.length);
 export const useRecovered = () => useAppStore((s) => s.recovered);
 export const useLastCompletion = () => useAppStore((s) => s.lastCompletion);
+export const useAcknowledgeCompletion = () => useAppStore((s) => s.acknowledgeCompletion);
 export const useTasks = () => useAppStore((s) => s.tasks);
 export const useSessions = () => useAppStore((s) => s.sessions);
 export const useSettings = () => useAppStore((s) => s.settings);

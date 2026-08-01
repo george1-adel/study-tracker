@@ -9,7 +9,7 @@ import { Toggle } from '../../components/Toggle';
 import { Modal } from '../../components/Modal';
 import { Toast } from '../../components/Toast';
 import { Ltr } from '../../components/Ltr';
-import { requestPermission } from '../../platform/notify';
+import { notify, requestPermission } from '../../platform/notify';
 import { dayKeyFromTimestamp } from '../../domain/time/dayKey';
 import { loadState, createMemoryAdapter } from '../../platform/storage';
 
@@ -25,6 +25,13 @@ function isValidVolume(val: number): boolean {
   if (val < 0) return false;
   if (val > 1) return false;
   return true;
+}
+
+function getNotificationPermission(): string {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'blocked-by-browser';
+  }
+  return Notification.permission;
 }
 
 export function SettingsPage() {
@@ -55,12 +62,30 @@ export function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Notification permission state
-  const [permissionState, setPermissionState] = useState<string>(() => {
-    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
-      return 'blocked-by-browser';
-    }
-    return Notification.permission;
-  });
+  const [permissionState, setPermissionState] = useState<string>(getNotificationPermission);
+
+  const refreshPermissionState = () => {
+    setPermissionState(getNotificationPermission());
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      refreshPermissionState();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshPermissionState();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     setDayStartHourInput(String(settings.dayStartHour));
@@ -230,6 +255,20 @@ export function SettingsPage() {
   const handleRequestNotificationPermission = async () => {
     const result = await requestPermission();
     setPermissionState(result);
+  };
+
+  const handleCheckPermissionAgain = () => {
+    refreshPermissionState();
+  };
+
+  const handleSendTestNotification = () => {
+    const notifTitle = t('settings.testNotificationTitle');
+    const notifBody = t('settings.testNotificationBody');
+    const result = notify(notifTitle, notifBody);
+    if (result !== 'shown') {
+      setToastMessage(t('settings.testNotificationFailed'));
+      setToastType('warning');
+    }
   };
 
   // Handle Export
@@ -501,7 +540,28 @@ export function SettingsPage() {
                   {t('settings.requestPermission')}
                 </Button>
               )}
+              {permissionState === 'granted' && (
+                <Button variant="secondary" onClick={handleSendTestNotification}>
+                  {t('settings.sendTestNotification')}
+                </Button>
+              )}
+              {permissionState === 'denied' && (
+                <Button variant="secondary" onClick={handleCheckPermissionAgain}>
+                  {t('settings.checkAgain')}
+                </Button>
+              )}
             </div>
+            <div className="settings-field-hint" style={{ marginBlockStart: 'var(--space-2)' }}>
+              {permissionState === 'default' && t('settings.permissionDefaultDesc')}
+              {permissionState === 'granted' && t('settings.permissionGrantedDesc')}
+              {permissionState === 'denied' && t('settings.permissionDeniedDesc')}
+              {(permissionState === 'blocked-by-browser' || (permissionState !== 'default' && permissionState !== 'granted' && permissionState !== 'denied')) && t('settings.permissionUnsupportedDesc')}
+            </div>
+            {settings.notifications.enabled && permissionState !== 'granted' && (
+              <div className="settings-field-hint" style={{ marginBlockStart: 'var(--space-2)', color: 'var(--alarm)' }}>
+                {t('settings.permissionMismatchNotice')}
+              </div>
+            )}
           </div>
         </div>
       </Card>

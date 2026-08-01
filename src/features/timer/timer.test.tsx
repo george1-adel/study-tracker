@@ -557,4 +557,48 @@ describe('timer feature', () => {
 
     vi.useRealTimers();
   });
+
+  it('after a non-silent completion is handled, store.lastCompletion is null', () => {
+    act(() => {
+      useAppStore.setState({
+        lastCompletion: { sessionId: 'sess-1', kind: 'stopwatch', silent: false },
+      });
+    });
+
+    renderHook(() => useTimerCompletion());
+
+    expect(useAppStore.getState().lastCompletion).toBeNull();
+  });
+
+  it('unmounting and remounting the hook after a completion fires playAlarm exactly ONCE in total', () => {
+    act(() => {
+      useAppStore.setState({
+        lastCompletion: { sessionId: 'sess-1', kind: 'stopwatch', silent: false },
+      });
+    });
+
+    const { unmount } = renderHook(() => useTimerCompletion());
+
+    expect(soundModule.playAlarm).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    renderHook(() => useTimerCompletion());
+
+    expect(soundModule.playAlarm).toHaveBeenCalledTimes(1);
+  });
+
+  it('a silent completion also clears lastCompletion and fires nothing', () => {
+    act(() => {
+      useAppStore.setState({
+        lastCompletion: { sessionId: 'sess-1', kind: 'stopwatch', silent: true },
+      });
+    });
+
+    renderHook(() => useTimerCompletion());
+
+    expect(soundModule.playAlarm).not.toHaveBeenCalled();
+    expect(notifyModule.notify).not.toHaveBeenCalled();
+    expect(useAppStore.getState().lastCompletion).toBeNull();
+  });
 });

@@ -240,4 +240,75 @@ describe('Settings Feature & Verification', () => {
     fireEvent.change(cyclesInput, { target: { value: '0' } });
     expect(store.settings.pomodoro.cyclesBeforeLongBreak).toBe(DEFAULT_SETTINGS.pomodoro.cyclesBeforeLongBreak); // Not updated to 0
   });
+
+  it('when permission is "denied" the block renders recovery instructions AND a "Check again" control, and requestPermission is NOT called when used', () => {
+    const mockRequestPermission = vi.fn().mockResolvedValue('denied');
+    const originalNotification = window.Notification;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).Notification = {
+      permission: 'denied',
+      requestPermission: mockRequestPermission,
+    };
+
+    render(<SettingsPage />);
+
+    expect(screen.getByText(/notifications are blocked for this site/i)).toBeInTheDocument();
+    const checkAgainBtn = screen.getByRole('button', { name: /check again/i });
+    expect(checkAgainBtn).toBeInTheDocument();
+
+    fireEvent.click(checkAgainBtn);
+
+    expect(mockRequestPermission).not.toHaveBeenCalled();
+
+    window.Notification = originalNotification;
+  });
+
+  it('"Check again" picks up a permission that changed underneath the app', () => {
+    const originalNotification = window.Notification;
+    const notificationMock = {
+      permission: 'denied',
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).Notification = notificationMock;
+
+    render(<SettingsPage />);
+
+    expect(screen.getByRole('button', { name: /check again/i })).toBeInTheDocument();
+
+    // Flip permission to granted
+    notificationMock.permission = 'granted';
+
+    fireEvent.click(screen.getByRole('button', { name: /check again/i }));
+
+    expect(screen.getByRole('button', { name: /send a test notification/i })).toBeInTheDocument();
+
+    window.Notification = originalNotification;
+  });
+
+  it('when permission is "granted" a test-notification control is present and calls notify()', () => {
+    const mockNotificationConstructor = vi.fn();
+    const originalNotification = window.Notification;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function MockNotification(this: any, title: string, options: any) {
+      mockNotificationConstructor(title, options);
+    }
+    MockNotification.permission = 'granted';
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).Notification = MockNotification;
+
+    render(<SettingsPage />);
+
+    const testBtn = screen.getByRole('button', { name: /send a test notification/i });
+    expect(testBtn).toBeInTheDocument();
+
+    fireEvent.click(testBtn);
+
+    expect(mockNotificationConstructor).toHaveBeenCalledTimes(1);
+
+    window.Notification = originalNotification;
+  });
 });

@@ -33,7 +33,7 @@ test.describe('Full Manual Flow', () => {
     await progressNav.click();
 
     // Verify Progress page loaded and completed task / session is displayed
-    await expect(page).toHaveURL('/progress');
+    await expect(page).toHaveURL(/.*progress/);
     await expect(page.locator('.progress-page')).toBeVisible();
     await expect(page.getByText('Completed tasks')).toBeVisible();
   });

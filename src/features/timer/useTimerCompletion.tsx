@@ -22,6 +22,7 @@ export function useTimerCompletion(): ReactNode | null {
     processedSessionIdRef.current = lastCompletion.sessionId;
 
     if (lastCompletion.silent) {
+      useAppStore.getState().acknowledgeCompletion();
       return;
     }
 
@@ -63,6 +64,8 @@ export function useTimerCompletion(): ReactNode | null {
       setToastMessage(fallbackMsg);
       setToastType(fallbackType);
     }
+
+    useAppStore.getState().acknowledgeCompletion();
   }, [lastCompletion, settings, tasks, t]);
 
   if (!toastMessage) return null;
