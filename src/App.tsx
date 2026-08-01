@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 import { initThemeAndDirection } from './features/shell/theme';
 import { Shell } from './features/shell/Shell';
@@ -17,7 +17,7 @@ export function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Shell />}>
           <Route index element={<DashboardPage />} />
@@ -26,7 +26,7 @@ export function App() {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
