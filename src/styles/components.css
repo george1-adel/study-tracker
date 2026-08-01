@@ -649,3 +649,168 @@
   white-space: nowrap;
 }
 
+/* Progress Page & Timeline */
+.progress-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.progress-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.progress-page-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.progress-view-toggle {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.day-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.day-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.day-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-card-date {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.day-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.day-card-tape {
+  width: 100%;
+}
+
+/* Calendar Month Component */
+.calendar-month-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.calendar-month-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.calendar-nav {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.calendar-grid-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+}
+
+.calendar-weekday-cell {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-block: var(--space-1);
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-2);
+}
+
+.calendar-cell {
+  min-height: 48px;
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  box-sizing: border-box;
+}
+
+.calendar-cell-blank {
+  background-color: transparent;
+  border: 1px dashed transparent;
+}
+
+.calendar-cell-day {
+  background-color: var(--ink-sunken);
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.calendar-cell-active {
+  border-color: var(--rule-strong);
+}
+
+.calendar-day-number {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.calendar-day-intensity-bar {
+  width: 100%;
+  background-color: var(--trace);
+  border-radius: 2px;
+  margin-block-start: var(--space-1);
+}
+
+/* Chart Cards */
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chart-card-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chart-container {
+  width: 100%;
+}
+
+
