@@ -19,6 +19,16 @@ export function totalFocusMs(sessions: Session[]): number {
   return total;
 }
 
+export function totalBreakMs(sessions: Session[]): number {
+  let total = 0;
+  for (const s of sessions) {
+    if (!isFocusKind(s.kind)) {
+      total += s.durationMs;
+    }
+  }
+  return total;
+}
+
 export function weeklyFocusMs(
   sessions: Session[],
   nowOrDayKey: number | DayKey,

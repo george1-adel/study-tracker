@@ -3,6 +3,7 @@ import {
   totalFocusMs,
   weeklyFocusMs,
   monthlyFocusMs,
+  totalBreakMs,
   avgDailyFocusMs,
   avgTaskCompletionMs,
   completedTaskCount,
@@ -138,5 +139,20 @@ describe('totals', () => {
       expect(longestSessionMs([s1, s2, s3, sBreak])).toBe(5_000_000);
       expect(shortestSessionMs([s1, s2, s3, sBreak])).toBe(1_000_000);
     });
+  });
+});
+
+describe('totalBreakMs', () => {
+  it('returns 0 on empty input', () => {
+    expect(totalBreakMs([])).toBe(0);
+  });
+  it('sums only break kinds and ignores focus kinds', () => {
+    const sessions = [
+      makeSession({ id: 'a', kind: 'stopwatch', durationMs: 600_000 }),
+      makeSession({ id: 'b', kind: 'pomodoro_short_break', durationMs: 300_000 }),
+      makeSession({ id: 'c', kind: 'pomodoro_long_break', durationMs: 900_000 }),
+      makeSession({ id: 'd', kind: 'pomodoro_work', durationMs: 1_500_000 }),
+    ];
+    expect(totalBreakMs(sessions)).toBe(1_200_000);
   });
 });

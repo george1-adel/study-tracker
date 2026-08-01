@@ -1,6 +1,6 @@
 import type { Task, Session, Settings } from '../../domain/types';
 import { getDayRecord } from '../../domain/stats/dayRecords';
-import { completedTaskCount, incompleteTaskCount, totalFocusMs } from '../../domain/stats/totals';
+import { completedTaskCount, incompleteTaskCount, totalFocusMs, totalBreakMs } from '../../domain/stats/totals';
 import { dayKeyFromTimestamp, enumerateDays, addDays, weekdayIndex } from '../../domain/time/dayKey';
 import { formatDuration, formatDayLabel } from '../../domain/time/format';
 import { isFocusKind } from '../../domain/types';
@@ -79,12 +79,7 @@ export function AnalyticsCharts({ tasks, sessions, settings, now, locale }: Anal
 
   // 4. Pie chart: focus vs break time split
   const totalFocus = totalFocusMs(sessions);
-  let totalBreak = 0;
-  for (const s of sessions) {
-    if (!isFocusKind(s.kind)) {
-      totalBreak += s.durationMs;
-    }
-  }
+  const totalBreak = totalBreakMs(sessions);
 
   const timeSplitData: PieChartItem[] = hasSessions && (totalFocus > 0 || totalBreak > 0)
     ? [
