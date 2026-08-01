@@ -21,6 +21,7 @@ import {
 } from '../../domain/stats';
 import { StatGrid } from './StatGrid';
 import { StreakPanel } from './StreakPanel';
+import { StreakFlame } from '../../components/StreakFlame';
 import { YearHeatmap } from './YearHeatmap';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { AnalyticsPage } from './AnalyticsPage';
@@ -204,6 +205,9 @@ describe('Analytics Feature', () => {
         />
       );
       expect(screen.getByText('Streak broken')).toBeInTheDocument();
+      const badge = container.querySelector('.streak-state-badge');
+      expect(badge).toHaveClass('streak-state-broken');
+      expect(container.querySelector('.streak-flame')).toHaveClass('streak-flame-broken');
 
       // 2. At risk state (yesterday 2026-08-01 counted, today 2026-08-02 has not yet)
       const yesterdaySession: Session = {
@@ -228,6 +232,8 @@ describe('Analytics Feature', () => {
 
       // Should indicate streak is INTACT ("Streak intact. Today not counted yet.")
       expect(screen.getByText('Streak intact. Today not counted yet.')).toBeInTheDocument();
+      expect(badge).toHaveClass('streak-state-at_risk');
+      expect(container.querySelector('.streak-flame')).toHaveClass('streak-flame-at_risk');
       // Count display should show 1, not 0!
       const countDisplay = container.querySelector('.streak-count-display');
       expect(countDisplay?.textContent).toBe('1');
@@ -254,6 +260,8 @@ describe('Analytics Feature', () => {
       );
 
       expect(screen.getByText('Streak active')).toBeInTheDocument();
+      expect(badge).toHaveClass('streak-state-active');
+      expect(container.querySelector('.streak-flame')).toHaveClass('streak-flame-active');
       expect(countDisplay?.textContent).toBe('2');
     });
 
@@ -271,6 +279,22 @@ describe('Analytics Feature', () => {
       expect(
         screen.getByText(/A day counts toward your streak when you log at least 15m of focus time/i)
       ).toBeInTheDocument();
+    });
+
+    it('renders distinct outer and inner paths for the active flame state', () => {
+      const { container } = render(<StreakFlame state="active" />);
+      const outerPath = container.querySelector('.streak-flame-outer');
+      const innerPath = container.querySelector('.streak-flame-inner');
+
+      expect(outerPath).not.toBeNull();
+      expect(innerPath).not.toBeNull();
+
+      const outerD = outerPath?.getAttribute('d');
+      const innerD = innerPath?.getAttribute('d');
+
+      expect(outerD).toBeTruthy();
+      expect(innerD).toBeTruthy();
+      expect(outerD).not.toEqual(innerD);
     });
   });
 

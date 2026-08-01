@@ -136,10 +136,41 @@ Structural devices must encode something true.
 
 ## 6. Motion
 
-**One orchestrated moment, everything else still.**
+**Two moments, everything else still.**
 
-The moment is **Start**: the playhead settles onto the tape (140ms), then the amber block begins
-extending. That is the app's one piece of choreography and it happens at the instant that matters.
+The first is **Start**: the playhead settles onto the tape (140ms), then the amber block begins
+extending. That is the app's main piece of choreography and it happens at the instant that matters.
+
+The second is **the streak flame** — see §6a. It is the only continuously animating element in the
+app, and it earns that by carrying state rather than decorating.
+
+### 6a. The streak flame — a pilot light
+
+The instrument is lit while the streak is alive. The flame is a **state indicator you read without
+reading words**, which is why it is allowed where a decorative flourish would not be:
+
+| State | Flame | Motion |
+|-------|-------|--------|
+| `active` | full height, `--trace` outer with a hotter inner core | gentle flicker, ~2s |
+| `at_risk` | shorter, `--trace-dim`, leaning | faster, more erratic — visibly guttering |
+| `broken` | no flame: a cold wick in `--rule-strong` with a faint ember dot | none |
+
+Amber is correct here and does not violate §3: a streak *is* accumulated recorded time. This is the
+third sanctioned use, alongside the running clock and the tape ink.
+
+**Constraints that keep it in this app's world — a glowing gradient flame belongs to a different
+product:**
+
+- Flat fills only. No gradient, no blur, no `filter: drop-shadow`, no glow, no neon.
+- Two flat tones maximum: outer `--trace`, inner core one step lighter.
+- Animate with CSS transforms on the SVG paths (`scaleY`, slight `translate`/`skew`, `opacity`).
+  Give the inner and outer paths **different durations and phases** so the flicker reads as organic
+  rather than a synchronised pulse.
+- `transform-origin` at the base of the flame — a flame is anchored at the wick, it does not scale
+  from its centre.
+- Under `prefers-reduced-motion: reduce` the flame is **static at its rest pose**, not hidden.
+- It sits beside the streak count and is `aria-hidden` — the state is already announced in text, and
+  a screen reader does not need a decorative duplicate.
 
 Everything else: `--dur-fast: 120ms` for hover/press, `--dur-med: 220ms` for enter/exit, both
 `cubic-bezier(0.2, 0, 0, 1)`. No page transitions, no staggered list reveals, no parallax, no

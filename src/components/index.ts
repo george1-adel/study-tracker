@@ -13,3 +13,5 @@ export * from './EmptyState';
 export * from './StatCard';
 export * from './TapeScale';
 export * from './Tape';
+export * from './StreakFlame';
+

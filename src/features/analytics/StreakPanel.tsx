@@ -4,6 +4,7 @@ import { formatDuration, formatDayLabel } from '../../domain/time/format';
 import { useT, type Language } from '../../i18n';
 import { Card } from '../../components/Card';
 import { Ltr } from '../../components/Ltr';
+import { StreakFlame } from '../../components/StreakFlame';
 
 export interface StreakPanelProps {
   sessions: Session[];
@@ -37,8 +38,11 @@ export function StreakPanel({ sessions, settings, now, locale }: StreakPanelProp
 
       <div className="streak-main-display">
         <div className="streak-hero">
-          <Ltr className="streak-count-display">{summary.current}</Ltr>
-          <div className="streak-state-badge streak-state-{summary.state}">
+          <div className="streak-hero-main">
+            <StreakFlame state={summary.state} />
+            <Ltr className="streak-count-display">{summary.current}</Ltr>
+          </div>
+          <div className={`streak-state-badge streak-state-${summary.state}`}>
             {getStateText()}
           </div>
         </div>
