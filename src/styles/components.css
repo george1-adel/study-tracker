@@ -111,9 +111,13 @@
 }
 
 .bottom-nav .nav-link {
+  flex: 1 1 0px;
+  min-width: 44px;
+  min-height: 44px;
   flex-direction: column;
   gap: 2px;
   justify-content: center;
+  align-items: center;
   font-size: 11px;
   padding-block: var(--space-1);
   padding-inline: var(--space-2);
@@ -427,6 +431,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* EmptyState Component */
