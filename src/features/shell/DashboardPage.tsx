@@ -1,7 +1,6 @@
-import { useT } from '../../i18n';
-import { EmptyState } from '../../components/EmptyState';
+import { DashboardPage as TaskDashboardPage } from '../tasks/DashboardPage';
 
 export function DashboardPage() {
-  const t = useT();
-  return <EmptyState title={t('placeholder.dashboard')} />;
+  return <TaskDashboardPage />;
 }
+

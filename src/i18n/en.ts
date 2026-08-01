@@ -38,6 +38,32 @@ export const en = {
     one: '{count} task',
     other: '{count} tasks',
   },
+  'tasks.title': 'Title',
+  'tasks.titlePlaceholder': 'Task title...',
+  'tasks.titleRequired': 'Title cannot be empty.',
+  'tasks.mode': 'Mode',
+  'tasks.mode.stopwatch': 'Stopwatch',
+  'tasks.mode.countdown': 'Countdown',
+  'tasks.mode.pomodoro': 'Pomodoro',
+  'tasks.duration': 'Duration',
+  'tasks.durationHours': 'Hours',
+  'tasks.durationMinutes': 'Minutes',
+  'tasks.durationRequired': 'Duration must be greater than 0 minutes.',
+  'tasks.add': 'Add task',
+  'tasks.edit': 'Edit task',
+  'tasks.editTitle': 'Edit task',
+  'tasks.delete': 'Delete task',
+  'tasks.deleteTitle': 'Delete task',
+  'tasks.deleteConfirm': 'Delete this task? Recorded focus time and session history will be kept.',
+  'tasks.empty': 'No tasks yet. Add a task above to get started.',
+  'tasks.pendingCount': {
+    one: 'Pending ({count})',
+    other: 'Pending ({count})',
+  },
+  'tasks.completedCount': {
+    one: 'Completed ({count})',
+    other: 'Completed ({count})',
+  },
 } as const;
 
 export type TranslationKeys = keyof typeof en;
