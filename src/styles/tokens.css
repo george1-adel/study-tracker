@@ -1,27 +1,20 @@
 :root {
   /* Colors - Dark theme (default) */
-  --bg: #0f172a;
-  --bg-elevated: #1e293b;
-  --bg-sunken: #090d16;
+  --ink: #0C1116;          /* page */
+  --ink-raised: #141B23;   /* cards, the tape bed */
+  --ink-sunken: #090D11;   /* wells, inputs */
+  --rule: #232E39;         /* hairline graduations, borders */
+  --rule-strong: #35434F;
+  --text: #E4E9ED;
+  --text-muted: #93A1AC;
+  --text-faint: #74818C;   /* 4.75:1 on --ink; #5C6A75 scored 3.41:1 */
 
-  --surface: #1e293b;
-  --surface-hover: #334155;
-  --border: #334155;
-  --border-strong: #475569;
-
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
-
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --accent-contrast: #ffffff;
-
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-
-  --focus-ring: rgba(99, 102, 241, 0.5);
+  --trace: #E8B93B;        /* SODIUM AMBER - focus time only */
+  --trace-dim: #6E5C2A;    /* amber at rest */
+  --breath: #4B7A8C;       /* desaturated slate-cyan */
+  --alarm: #D9553F;        /* clay red - destructive actions */
+  --alarm-contrast: #FFFFFF;
+  --focus-ring: #E8B93B;
 
   /* Spacing - 4px scale */
   --space-1: 4px;
@@ -32,52 +25,40 @@
   --space-6: 24px;
   --space-7: 32px;
   --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
 
   /* Border Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
+  --radius: 4px;
+  --radius-lg: 8px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-
-  /* Typography */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-
-  /* Durations */
+  /* Durations & Easing */
   --dur-fast: 120ms;
   --dur-med: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Typography */
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', sans-serif;
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
 
 [data-theme='light'] {
-  --bg: #f8fafc;
-  --bg-elevated: #ffffff;
-  --bg-sunken: #f1f5f9;
+  --paper: #F2F4F6;
+  --ink: #F2F4F6;
+  --ink-raised: #FFFFFF;
+  --ink-sunken: #E5E8EB;
+  --rule: #D1D7DC;
+  --rule-strong: #B0B8C0;
+  --text: #12181F;
+  --text-muted: #52606D;
+  --text-faint: #556370;
 
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
-
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-contrast: #ffffff;
-
-  --success: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
-
-  --focus-ring: rgba(79, 70, 229, 0.4);
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  /* Amber must stay legible ON PAPER: #C49200 scored 2.55:1 against --ink.
+     A darker ochre is also truer to the metaphor - ink on paper is dark. */
+  --trace: #8F6806;        /* 4.59:1 on --ink, 5.06:1 on --ink-raised */
+  --trace-dim: #B99447;    /* at-rest marks, non-text */
+  --breath: #3B6473;
+  --alarm: #C93B2B;
+  --focus-ring: #8F6806;
 }

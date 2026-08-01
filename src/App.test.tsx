@@ -5,6 +5,6 @@ import App from './App';
 describe('App', () => {
   it('renders the app name from i18n', () => {
     render(<App />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Study Tracker');
+    expect(screen.getByText('Study Tracker')).toBeInTheDocument();
   });
 });

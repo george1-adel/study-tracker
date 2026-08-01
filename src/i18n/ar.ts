@@ -1,5 +1,33 @@
-import type { Translations } from './en';
+import type { ArabicTranslations } from './en';
 
-export const ar: Translations = {
+export const ar: ArabicTranslations = {
   'app.name': 'متتبع الدراسة',
+  'nav.dashboard': 'لوحة التحكم',
+  'nav.progress': 'التقدم',
+  'nav.analytics': 'التحليلات',
+  'nav.settings': 'الإعدادات',
+  'theme.toggle': 'تبديل المظهر',
+  'theme.dark': 'داكن',
+  'theme.light': 'فاتح',
+  'lang.toggle': 'تبديل اللغة',
+  'lang.en': 'English',
+  'lang.ar': 'العربية',
+  'action.close': 'إغلاق',
+  'action.cancel': 'إلغاء',
+  'action.save': 'حفظ',
+  'action.delete': 'حذف',
+  'action.confirm': 'تأكيد',
+  'toast.dataRecovered': 'تعذر قراءة البيانات المحفوظة وتم إعادة ضبطها.',
+  'placeholder.dashboard': 'لا يوجد شيء على الشريط بعد. ابدأ المؤقت.',
+  'placeholder.progress': 'لا توجد سجلات تقدم متاحة.',
+  'placeholder.analytics': 'لا توجد تحليلات متاحة.',
+  'placeholder.settings': 'إعدادات التهيئة.',
+  'tasks.count': {
+    zero: 'لا توجد مهمات',
+    one: 'مهمة واحدة',
+    two: 'مهمتان',
+    few: '{count} مهمات',
+    many: '{count} مهمة',
+    other: '{count} مهمة',
+  },
 };
