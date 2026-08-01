@@ -1,0 +1,22 @@
+.app-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding-inline: var(--space-4);
+}
+
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding-inline: var(--space-6);
+  padding-block: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.app-title {
+  color: var(--text);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
