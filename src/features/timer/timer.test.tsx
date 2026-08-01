@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { TimerPanel } from './TimerPanel';
 import { useTimerTick } from './useTimerTick';
 import { useTimerCompletion } from './useTimerCompletion';
+import { totalFocusMs } from '../../domain/stats/totals';
 import * as soundModule from '../../platform/sound';
 import * as notifyModule from '../../platform/notify';
 
@@ -187,5 +188,373 @@ describe('timer feature', () => {
 
     expect(state.activeTimer).not.toBeNull();
     expect(state.activeTimer?.taskId).toBe(taskB.id);
+  });
+
+  it('a work phase reaching zero writes a pomodoro_work session and DOES NOT set the task\'s completedAt or completedDayKey', () => {
+    vi.useFakeTimers();
+    const now = 100000;
+    vi.setSystemTime(now);
+
+    let task: ReturnType<typeof useAppStore.getState.prototype.addTask>;
+    act(() => {
+      task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    const workDuration = 25 * 60_000;
+    vi.setSystemTime(now + workDuration);
+
+    act(() => {
+      tickCallback();
+    });
+
+    const state = useAppStore.getState();
+    expect(state.sessions.length).toBe(1);
+    expect(state.sessions[0]?.kind).toBe('pomodoro_work');
+    expect(state.sessions[0]?.durationMs).toBe(workDuration);
+    expect(state.sessions[0]?.completed).toBe(true);
+
+    const updatedTask = state.tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.completedAt).toBeNull();
+    expect(updatedTask?.completedDayKey).toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it('after work ends, the offered control starts a break; after a break ends, it starts work', () => {
+    vi.useFakeTimers();
+    const now = 100000;
+    vi.setSystemTime(now);
+
+    let task: ReturnType<typeof useAppStore.getState.prototype.addTask>;
+    act(() => {
+      task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    // Work phase finishes (25 min)
+    const workDuration = 25 * 60_000;
+    vi.setSystemTime(now + workDuration);
+    act(() => {
+      tickCallback();
+    });
+
+    // Active timer is now paused short_break phase
+    let state = useAppStore.getState();
+    expect(state.activeTimer?.pomodoro?.phase).toBe('short_break');
+    expect(state.activeTimer?.status).toBe('paused');
+
+    // Press control to start break (resume)
+    const breakStartTs = now + workDuration;
+    act(() => {
+      useAppStore.getState().resume(breakStartTs);
+    });
+
+    expect(useAppStore.getState().activeTimer?.status).toBe('running');
+
+    // Break phase finishes (5 min)
+    const breakDuration = 5 * 60_000;
+    vi.setSystemTime(breakStartTs + breakDuration);
+    act(() => {
+      tickCallback();
+    });
+
+    // Active timer is now paused work phase
+    state = useAppStore.getState();
+    expect(state.activeTimer?.pomodoro?.phase).toBe('work');
+    expect(state.activeTimer?.status).toBe('paused');
+
+    // Press control to start work (resume)
+    act(() => {
+      useAppStore.getState().resume(breakStartTs + breakDuration);
+    });
+
+    expect(useAppStore.getState().activeTimer?.status).toBe('running');
+
+    vi.useRealTimers();
+  });
+
+  it('the fourth work phase (cyclesBeforeLongBreak = 4) is followed by a LONG break, the first three by short breaks', () => {
+    vi.useFakeTimers();
+    let now = 100000;
+    vi.setSystemTime(now);
+
+    let task: ReturnType<typeof useAppStore.getState.prototype.addTask>;
+    act(() => {
+      task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    const workMs = 25 * 60_000;
+    const shortBreakMs = 5 * 60_000;
+
+    // Cycle 1 work ends
+    now += workMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('short_break');
+
+    // Short break 1 ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += shortBreakMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('work');
+
+    // Cycle 2 work ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += workMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('short_break');
+
+    // Short break 2 ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += shortBreakMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('work');
+
+    // Cycle 3 work ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += workMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('short_break');
+
+    // Short break 3 ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += shortBreakMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('work');
+
+    // Cycle 4 work ends -> LONG BREAK!
+    act(() => { useAppStore.getState().resume(now); });
+    now += workMs;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+    expect(useAppStore.getState().activeTimer?.pomodoro?.phase).toBe('long_break');
+
+    vi.useRealTimers();
+  });
+
+  it('completedWorkCycles increments only when a work phase ends, not when a break ends', () => {
+    vi.useFakeTimers();
+    let now = 100000;
+    vi.setSystemTime(now);
+
+    let task: ReturnType<typeof useAppStore.getState.prototype.addTask>;
+    act(() => {
+      task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    expect(useAppStore.getState().activeTimer?.pomodoro?.completedWorkCycles).toBe(0);
+
+    // Work phase ends
+    now += 25 * 60_000;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+
+    expect(useAppStore.getState().activeTimer?.pomodoro?.completedWorkCycles).toBe(1);
+
+    // Break phase ends
+    act(() => { useAppStore.getState().resume(now); });
+    now += 5 * 60_000;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+
+    // Should still be 1 after break ends!
+    expect(useAppStore.getState().activeTimer?.pomodoro?.completedWorkCycles).toBe(1);
+
+    vi.useRealTimers();
+  });
+
+  it('with autoStartBreaks false, no timer is running after a work phase ends until the control is pressed', () => {
+    vi.useFakeTimers();
+    const now = 100000;
+    vi.setSystemTime(now);
+
+    act(() => {
+      useAppStore.getState().updateSettings({
+        pomodoro: { ...useAppStore.getState().settings.pomodoro, autoStartBreaks: false },
+      });
+      const task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    vi.setSystemTime(now + 25 * 60_000);
+    act(() => { tickCallback(); });
+
+    const active = useAppStore.getState().activeTimer;
+    expect(active?.status).toBe('paused');
+    expect(active?.pomodoro?.phase).toBe('short_break');
+
+    // Press control to resume
+    act(() => { useAppStore.getState().resume(now + 25 * 60_000); });
+    expect(useAppStore.getState().activeTimer?.status).toBe('running');
+
+    vi.useRealTimers();
+  });
+
+  it('with autoStartBreaks true, the break starts automatically and exactly once under a double-invoked effect', () => {
+    vi.useFakeTimers();
+    const now = 100000;
+    vi.setSystemTime(now);
+
+    act(() => {
+      useAppStore.getState().updateSettings({
+        pomodoro: { ...useAppStore.getState().settings.pomodoro, autoStartBreaks: true },
+      });
+      const task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    vi.setSystemTime(now + 25 * 60_000);
+
+    // Double-invoked tick in StrictMode simulation
+    act(() => {
+      tickCallback();
+      tickCallback();
+    });
+
+    const state = useAppStore.getState();
+    expect(state.activeTimer?.status).toBe('running');
+    expect(state.activeTimer?.pomodoro?.phase).toBe('short_break');
+    // Only 1 work session written, not skipped
+    expect(state.sessions.length).toBe(1);
+    expect(state.sessions[0]?.kind).toBe('pomodoro_work');
+
+    vi.useRealTimers();
+  });
+
+  it('a break session is recorded with a break kind and does not appear in focus totals', () => {
+    vi.useFakeTimers();
+    let now = 100000;
+    vi.setSystemTime(now);
+
+    let task: ReturnType<typeof useAppStore.getState.prototype.addTask>;
+    act(() => {
+      task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    let tickCallback: () => void = () => {};
+    const fakeTicker = {
+      subscribe: vi.fn((fn: () => void) => {
+        tickCallback = fn;
+        return () => {};
+      }),
+    };
+
+    renderHook(() => useTimerTick(fakeTicker));
+
+    // Finish work (25m)
+    now += 25 * 60_000;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+
+    // Start & finish short break (5m)
+    act(() => { useAppStore.getState().resume(now); });
+    now += 5 * 60_000;
+    vi.setSystemTime(now);
+    act(() => { tickCallback(); });
+
+    const state = useAppStore.getState();
+    expect(state.sessions.length).toBe(2);
+    expect(state.sessions[0]?.kind).toBe('pomodoro_work');
+    expect(state.sessions[1]?.kind).toBe('pomodoro_short_break');
+
+    const focusMs = totalFocusMs(state.sessions);
+    expect(focusMs).toBe(25 * 60_000); // 25 min, excluding 5 min break!
+
+    vi.useRealTimers();
+  });
+
+  it('a silent (rehydrate) pomodoro completion fires neither alarm nor notification', () => {
+    vi.useFakeTimers();
+    const now = 100000;
+    vi.setSystemTime(now);
+
+    act(() => {
+      const task = useAppStore.getState().addTask('Pomodoro Task', 'pomodoro', null, now);
+      useAppStore.getState().startTimerFor(task.id, now);
+    });
+
+    // Advance past work duration while app was closed
+    const expiredNow = now + 30 * 60_000;
+    vi.setSystemTime(expiredNow);
+
+    act(() => {
+      useAppStore.getState().rehydrateFromStorage(expiredNow);
+    });
+
+    renderHook(() => useTimerCompletion());
+
+    expect(soundModule.playAlarm).not.toHaveBeenCalled();
+    expect(notifyModule.notify).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
   });
 });

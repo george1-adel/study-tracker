@@ -73,6 +73,14 @@ export const en = {
   'timer.switchNotice': 'Starting this will finish "{taskTitle}".',
   'timer.notificationsBlocked': 'Notifications are blocked. Turn them on in your browser settings to get alerts when a timer ends.',
   'timer.soundBlocked': 'Audio is blocked by your browser. Click anywhere to allow sound.',
+  'timer.work': 'Work',
+  'timer.shortBreak': 'Short break',
+  'timer.longBreak': 'Long break',
+  'timer.startBreak': 'Start break',
+  'timer.startWork': 'Start work',
+  'timer.workFinished': 'Work session finished. Take a break.',
+  'timer.breakFinished': 'Break finished. Ready to work.',
+  'timer.cycleProgress': '{count} of {total} cycles',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

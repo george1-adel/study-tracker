@@ -73,4 +73,12 @@ export const ar: ArabicTranslations = {
   'timer.switchNotice': 'بدء هذا سينهي "{taskTitle}".',
   'timer.notificationsBlocked': 'الإشعارات محظورة. قم بتفعيلها في إعدادات المتصفح للحصول على تنبيهات عند انتهاء المؤقت.',
   'timer.soundBlocked': 'الصوت محظور بواسطة المتصفح. انقر في أي مكان للسماح بالصوت.',
+  'timer.work': 'عمل',
+  'timer.shortBreak': 'استراحة قصيرة',
+  'timer.longBreak': 'استراحة طويلة',
+  'timer.startBreak': 'ابدأ الاستراحة',
+  'timer.startWork': 'ابدأ العمل',
+  'timer.workFinished': 'انتهت جلسة العمل. خذ استراحة.',
+  'timer.breakFinished': 'انتهت الاستراحة. جاهز للعمل.',
+  'timer.cycleProgress': '{count} من {total} دورات',
 };

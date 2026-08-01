@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useT } from '../../i18n';
 import { Button } from '../../components';
 import { unlockAudio } from '../../platform/sound';
+import { elapsedMs } from '../../domain/timer/engine';
 
 export interface TimerControlsProps {
   task: Task;
@@ -36,10 +37,18 @@ export function TimerControls({ task }: TimerControlsProps) {
       finish(Date.now());
     };
 
+    let toggleLabel = isRunning ? t('timer.pause') : t('timer.resume');
+    if (!isRunning && activeTimer.pomodoro) {
+      const elapsed = elapsedMs(activeTimer, Date.now());
+      if (elapsed === 0) {
+        toggleLabel = activeTimer.pomodoro.phase === 'work' ? t('timer.startWork') : t('timer.startBreak');
+      }
+    }
+
     return (
       <div className="timer-controls">
-        <Button variant="secondary" onClick={handleTogglePause} aria-label={isRunning ? t('timer.pause') : t('timer.resume')}>
-          {isRunning ? t('timer.pause') : t('timer.resume')}
+        <Button variant="secondary" onClick={handleTogglePause} aria-label={toggleLabel}>
+          {toggleLabel}
         </Button>
         <Button variant="primary" onClick={handleFinish} aria-label={t('timer.finish')}>
           {t('timer.finish')}

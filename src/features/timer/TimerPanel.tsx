@@ -6,6 +6,7 @@ import { Button, Ltr } from '../../components';
 import { unlockAudio } from '../../platform/sound';
 import { useTimerTick } from './useTimerTick';
 import { useTimerCompletion } from './useTimerCompletion';
+import { PomodoroPanel } from './PomodoroPanel';
 import './timer.css';
 
 export function TimerPanel() {
@@ -21,6 +22,10 @@ export function TimerPanel() {
 
   if (!activeTimer) {
     return toastNode ? <div className="timer-toast-slot">{toastNode}</div> : null;
+  }
+
+  if (activeTimer.pomodoro) {
+    return <PomodoroPanel />;
   }
 
   const task = tasks.find((t) => t.id === activeTimer.taskId);
