@@ -12,10 +12,12 @@ primary figure because it rewards creating many trivial tasks and collapses to `
 no tasks. The task ratio is still shown, separately labelled. *Revisit if the user prefers a
 task-based definition.*
 
-**D2 — Streaks count task completions, not logged time.**
-The spec says "if I complete at least one study/work task during the day". Taken literally. A day
-with 3 hours logged but nothing marked complete does **not** count. *This is the most likely
-decision to surprise the user; flagged for confirmation.*
+**D2 — Streaks count logged focus time, not task completions.** *(User decision, 2026-08-01.)*
+The spec's wording was "if I complete at least one study/work task during the day", which was first
+implemented literally. Raised with the user because it fails the common case: open-ended study where
+you work for hours without finishing a discrete, tickable item would not have counted. The user
+chose time-based. A day counts when `focusMs(day) >= settings.streakMinFocusMs`, default 15 minutes.
+The floor exists so an accidental start/stop cannot count a day.
 
 **D3 — A streak is not broken until a full day is missed.**
 The spec's "if I miss Day 4, streak resets to 0" was not applied at midnight, because that would

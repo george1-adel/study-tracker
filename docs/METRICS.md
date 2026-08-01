@@ -52,9 +52,14 @@ productivityPct(day) = min(100, round(focusMs(day) / settings.dailyGoalMs * 100)
 
 ## Streaks
 
-A day **counts for the streak** if and only if **at least one task has `completedDayKey === day`**.
-Logging time without completing a task does not count. (This follows the product spec literally:
-"if I complete at least one study/work task during the day".)
+A day **counts for the streak** if and only if **`focusMs(day) >= settings.streakMinFocusMs`**
+(default 15 minutes). Completing a task is **not** required, and completing a task without logging
+that much focus time does **not** count the day on its own.
+
+The measure is *time actually worked*, because open-ended study is the normal case here: you sit
+down for two hours without finishing a discrete, tickable thing. A completion-based streak would
+punish exactly the sessions this app exists to record. The 15-minute floor keeps an accidental
+start/stop from counting a day.
 
 ```
 currentStreak

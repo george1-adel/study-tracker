@@ -127,6 +127,7 @@ interface Settings {
   dayStartHour: number;                 // 0-23, default 0
   weekStartsOn: 0 | 1 | 6;              // Sun | Mon | Sat, default 1
   dailyGoalMs: number;                  // default 4h = 14_400_000
+  streakMinFocusMs: number;             // default 15m = 900_000; floor for a day to count
   pomodoro: {
     workMinutes: number;                // default 25
     shortBreakMinutes: number;          // default 5
