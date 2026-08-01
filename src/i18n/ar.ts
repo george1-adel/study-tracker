@@ -81,4 +81,16 @@ export const ar: ArabicTranslations = {
   'timer.workFinished': 'انتهت جلسة العمل. خذ استراحة.',
   'timer.breakFinished': 'انتهت الاستراحة. جاهز للعمل.',
   'timer.cycleProgress': '{count} من {total} دورات',
+  'tape.focusCount': {
+    zero: 'لا توجد جلسات تركيز',
+    one: 'جلسة تركيز واحدة',
+    two: 'جلستا تركيز',
+    few: '{count} جلسات تركيز',
+    many: '{count} جلسة تركيز',
+    other: '{count} جلسة تركيز',
+  },
+  'tape.mostRecent': 'أحدثها من {start} إلى {end}',
+  'tape.kindFocus': 'تركيز',
+  'tape.kindBreak': 'استراحة',
+  'tape.blockTooltip': '{kind} - {duration}، {start} إلى {end}',
 };

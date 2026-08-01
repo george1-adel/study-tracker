@@ -81,6 +81,14 @@ export const en = {
   'timer.workFinished': 'Work session finished. Take a break.',
   'timer.breakFinished': 'Break finished. Ready to work.',
   'timer.cycleProgress': '{count} of {total} cycles',
+  'tape.focusCount': {
+    one: '{count} focus session',
+    other: '{count} focus sessions',
+  },
+  'tape.mostRecent': 'most recent {start} to {end}',
+  'tape.kindFocus': 'Focus',
+  'tape.kindBreak': 'Break',
+  'tape.blockTooltip': '{kind} - {duration}, {start} to {end}',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

@@ -489,3 +489,163 @@
   color: var(--text-muted);
   margin-inline-start: var(--space-1);
 }
+
+/* Tape Component System */
+.tape-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  background-color: var(--ink-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  box-sizing: border-box;
+}
+
+.tape-scale {
+  position: relative;
+  height: 20px;
+  width: 100%;
+  user-select: none;
+}
+
+.tape-scale-tick {
+  position: absolute;
+  inset-block-start: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tape-scale-line {
+  width: 1px;
+  height: 6px;
+  background-color: var(--rule);
+}
+
+.tape-scale-tick-6h .tape-scale-line {
+  height: 8px;
+  background-color: var(--rule-strong);
+}
+
+.tape-scale-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  margin-block-start: 2px;
+}
+
+@media (max-width: 479.98px) {
+  .tape-scale-tick-3h {
+    display: none;
+  }
+}
+
+.tape-bed {
+  position: relative;
+  height: 48px;
+  width: 100%;
+  background-color: var(--ink-sunken);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tape-grid {
+  position: absolute;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  pointer-events: none;
+}
+
+.tape-grid-line {
+  position: absolute;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  width: 1px;
+  background-color: var(--rule);
+  opacity: 0.5;
+}
+
+.tape-grid-line-3h {
+  opacity: 0.25;
+}
+
+@media (max-width: 479.98px) {
+  .tape-grid-line-3h {
+    display: none;
+  }
+}
+
+.tape-lanes {
+  position: absolute;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tape-lane {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
+.tape-block {
+  position: absolute;
+  border-radius: 0; /* Square-ended ink strokes */
+}
+
+.tape-block-focus {
+  inset-block-start: 4px;
+  inset-block-end: 4px;
+  background-color: var(--trace);
+}
+
+.tape-block-break {
+  inset-block-start: 12px;
+  inset-block-end: 12px;
+  background-color: var(--breath);
+}
+
+.tape-playhead {
+  position: absolute;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  width: 2px;
+  background-color: var(--text);
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.tape-playhead-cap {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-inline-start: 4px solid transparent;
+  border-inline-end: 4px solid transparent;
+  border-block-start: 6px solid var(--text);
+}
+
+.tape-empty-message {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
