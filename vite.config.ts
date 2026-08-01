@@ -5,15 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: './',
   plugins: [react()],
-  build: {
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name][extname]',
-      },
-    },
-  },
+  // Asset filenames keep Vite's default content hash. Without it every deploy
+  // reuses assets/index.js and browsers serve the cached old bundle, so a fix
+  // never reaches users. base:'./' is what makes the Pages subpath work.
   test: {
     environment: 'jsdom',
     globals: true,
