@@ -64,4 +64,13 @@ export const ar: ArabicTranslations = {
     many: 'المكتملة ({count})',
     other: 'المكتملة ({count})',
   },
+  'timer.start': 'ابدأ',
+  'timer.pause': 'إيقاف مؤقت',
+  'timer.resume': 'استئناف',
+  'timer.finish': 'إنهاء',
+  'timer.finished': 'انتهى',
+  'timer.notificationTitle': 'انتهى المؤقت',
+  'timer.switchNotice': 'بدء هذا سينهي "{taskTitle}".',
+  'timer.notificationsBlocked': 'الإشعارات محظورة. قم بتفعيلها في إعدادات المتصفح للحصول على تنبيهات عند انتهاء المؤقت.',
+  'timer.soundBlocked': 'الصوت محظور بواسطة المتصفح. انقر في أي مكان للسماح بالصوت.',
 };

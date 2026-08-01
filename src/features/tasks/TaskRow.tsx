@@ -9,6 +9,7 @@ import { IconButton } from '../../components/IconButton';
 import { Ltr } from '../../components/Ltr';
 import { TaskEditDialog } from './TaskEditDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
+import { TimerControls } from '../timer';
 
 export interface TaskRowProps {
   task: Task;
@@ -73,7 +74,9 @@ export function TaskRow({ task }: TaskRowProps) {
         {formattedDuration && <Ltr className="task-target-duration">{formattedDuration}</Ltr>}
       </div>
 
-      <div className="task-timer-slot" data-testid="task-timer-slot" />
+      <div className="task-timer-slot" data-testid="task-timer-slot">
+        <TimerControls task={task} />
+      </div>
 
       <div className="task-row-actions">
         <IconButton aria-label={t('tasks.edit')} onClick={() => setIsEditing(true)}>

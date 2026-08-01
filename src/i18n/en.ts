@@ -64,6 +64,15 @@ export const en = {
     one: 'Completed ({count})',
     other: 'Completed ({count})',
   },
+  'timer.start': 'Start',
+  'timer.pause': 'Pause',
+  'timer.resume': 'Resume',
+  'timer.finish': 'Finish',
+  'timer.finished': 'Finished',
+  'timer.notificationTitle': 'Timer Finished',
+  'timer.switchNotice': 'Starting this will finish "{taskTitle}".',
+  'timer.notificationsBlocked': 'Notifications are blocked. Turn them on in your browser settings to get alerts when a timer ends.',
+  'timer.soundBlocked': 'Audio is blocked by your browser. Click anywhere to allow sound.',
 } as const;
 
 export type TranslationKeys = keyof typeof en;
