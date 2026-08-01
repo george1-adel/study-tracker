@@ -1,7 +1,3 @@
-import { useT } from '../../i18n';
-import { EmptyState } from '../../components/EmptyState';
-
-export function SettingsPage() {
-  const t = useT();
-  return <EmptyState title={t('placeholder.settings')} />;
-}
+import { SettingsPage } from '../settings/SettingsPage';
+export { SettingsPage };
+export default SettingsPage;
