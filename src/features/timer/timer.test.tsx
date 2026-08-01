@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useAppStore } from '../../store/useAppStore';
 import { TimerPanel } from './TimerPanel';
+import { TimerControls } from './TimerControls';
 import { useTimerTick } from './useTimerTick';
 import { useTimerCompletion } from './useTimerCompletion';
 import { totalFocusMs } from '../../domain/stats/totals';
@@ -600,5 +601,41 @@ describe('timer feature', () => {
     expect(soundModule.playAlarm).not.toHaveBeenCalled();
     expect(notifyModule.notify).not.toHaveBeenCalled();
     expect(useAppStore.getState().lastCompletion).toBeNull();
+  });
+
+  it('TimerControls does not offer Pause or Finish buttons for a completed task even if activeTimer is set for it', () => {
+    const task = {
+      id: 'completed-task-1',
+      title: 'Completed Task',
+      createdAt: 1000,
+      mode: 'stopwatch' as const,
+      targetMs: null,
+      completedAt: 5000,
+      completedDayKey: '2026-08-01',
+      deletedAt: null,
+      categoryId: null,
+      tags: [],
+      notes: null,
+    };
+
+    act(() => {
+      useAppStore.setState({
+        tasks: [task],
+        activeTimer: {
+          taskId: 'completed-task-1',
+          kind: 'stopwatch',
+          status: 'running',
+          startedAt: 1000,
+          accumulatedMs: 0,
+          targetMs: null,
+          pomodoro: null,
+        },
+      });
+    });
+
+    const { container } = render(<TimerControls task={task} />);
+    expect(container.firstChild).toBeNull();
+    expect(screen.queryByRole('button', { name: /pause/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /finish/i })).not.toBeInTheDocument();
   });
 });

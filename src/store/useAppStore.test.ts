@@ -234,6 +234,94 @@ describe('useAppStore', () => {
     expect(updated?.completedDayKey).toBeNull();
   });
 
+  it("ticking a running task's checkbox writes a session, clears activeTimer, completes the task, and leaves lastCompletion null", () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    const startTs = 10000;
+    const finishTs = 15000;
+    const task = store.getState().addTask('Task A', 'stopwatch', null, startTs);
+    store.getState().startTimerFor(task.id, startTs);
+
+    expect(store.getState().activeTimer?.taskId).toBe(task.id);
+
+    store.getState().toggleTaskCompleted(task.id, finishTs);
+
+    const state = store.getState();
+
+    // clears activeTimer, completes task, and writes session, ALL in one action
+    expect(state.activeTimer).toBeNull();
+    expect(state.lastCompletion).toBeNull();
+
+    const updatedTask = state.tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.completedAt).toBe(finishTs);
+    expect(updatedTask?.completedDayKey).toBe(dayKeyFromTimestamp(finishTs, 0));
+
+    expect(state.sessions).toHaveLength(1);
+    expect(state.sessions[0]?.taskId).toBe(task.id);
+    expect(state.sessions[0]?.durationMs).toBe(5000);
+  });
+
+  it("ticking task B's checkbox while task A's timer runs leaves A's timer untouched and running", () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    const startTs = 10000;
+    const toggleTs = 15000;
+    const taskA = store.getState().addTask('Task A', 'stopwatch', null, startTs);
+    const taskB = store.getState().addTask('Task B', 'stopwatch', null, startTs);
+
+    store.getState().startTimerFor(taskA.id, startTs);
+    expect(store.getState().activeTimer?.taskId).toBe(taskA.id);
+
+    store.getState().toggleTaskCompleted(taskB.id, toggleTs);
+
+    const state = store.getState();
+    expect(state.activeTimer?.taskId).toBe(taskA.id);
+    expect(state.activeTimer?.status).toBe('running');
+
+    const updatedTaskB = state.tasks.find((t) => t.id === taskB.id);
+    expect(updatedTaskB?.completedAt).toBe(toggleTs);
+
+    expect(state.sessions).toHaveLength(0);
+  });
+
+  it('unchecking a completed task starts no timer and leaves activeTimer null', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    const task = store.getState().addTask('Task A', 'stopwatch', null, 10000);
+    store.getState().toggleTaskCompleted(task.id, 10000);
+
+    expect(store.getState().activeTimer).toBeNull();
+
+    store.getState().toggleTaskCompleted(task.id, 15000);
+
+    const state = store.getState();
+    const updatedTask = state.tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.completedAt).toBeNull();
+    expect(state.activeTimer).toBeNull();
+  });
+
+  it('a sub-second timer ticked complete writes no session but still completes the task and clears the timer', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    const startTs = 10000;
+    const toggleTs = 10500; // 500ms elapsed (< 1000ms sub-second)
+    const task = store.getState().addTask('Task A', 'stopwatch', null, startTs);
+    store.getState().startTimerFor(task.id, startTs);
+
+    store.getState().toggleTaskCompleted(task.id, toggleTs);
+
+    const state = store.getState();
+    expect(state.activeTimer).toBeNull();
+    expect(state.sessions).toHaveLength(0);
+
+    const updatedTask = state.tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.completedAt).toBe(toggleTs);
+  });
+
   it('importState with a hostile blob returns false and leaves existing state untouched', () => {
     const adapter = createMemoryAdapter();
     const store = createAppStore(adapter);

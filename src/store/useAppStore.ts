@@ -187,11 +187,30 @@ export function createAppStore(
     },
 
     toggleTaskCompleted(id: string, now: number): void {
-      const { tasks, settings } = get();
+      const { tasks, sessions, settings, activeTimer } = get();
       const existing = tasks.find((t) => t.id === id);
       if (!existing) return;
 
       const isCompleted = existing.completedAt !== null || existing.completedDayKey !== null;
+
+      let nextSessions = sessions;
+      let nextActiveTimer = activeTimer;
+
+      if (!isCompleted && activeTimer !== null && activeTimer.taskId === id) {
+        const { session } = finishTimer(
+          activeTimer,
+          now,
+          settings.dayStartHour,
+          crypto.randomUUID()
+        );
+        if (session !== null) {
+          nextSessions = [...sessions, session];
+        }
+        nextActiveTimer = null;
+        // Do NOT set lastCompletion. Ticking a checkbox is a manual action the user is already looking at;
+        // it must NOT play the alarm or fire a notification. This is the difference between this path and finish(), and it is deliberate.
+      }
+
       const updated: Task = isCompleted
         ? { ...existing, completedAt: null, completedDayKey: null }
         : {
@@ -201,7 +220,11 @@ export function createAppStore(
           };
 
       const nextTasks = tasks.map((t) => (t.id === id ? updated : t));
-      set({ tasks: nextTasks });
+      set({
+        tasks: nextTasks,
+        sessions: nextSessions,
+        activeTimer: nextActiveTimer,
+      });
       saveState(adapter, getPersistedSlice(get()));
     },
 

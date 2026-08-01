@@ -21,6 +21,10 @@ export function TimerControls({ task }: TimerControlsProps) {
   const isCompleted = task.completedAt !== null || task.completedDayKey !== null;
   const isThisTaskRunning = activeTimer?.taskId === task.id;
 
+  if (isCompleted) {
+    return null;
+  }
+
   if (isThisTaskRunning) {
     const isRunning = activeTimer.status === 'running';
 
@@ -55,10 +59,6 @@ export function TimerControls({ task }: TimerControlsProps) {
         </Button>
       </div>
     );
-  }
-
-  if (isCompleted) {
-    return null;
   }
 
   const anotherTask = activeTimer ? tasks.find((t) => t.id === activeTimer.taskId) : null;
