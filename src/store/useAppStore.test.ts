@@ -140,6 +140,7 @@ describe('useAppStore', () => {
           id: 'task-1',
           title: 'Expired Countdown',
           createdAt: 1000,
+          dayKey: '1970-01-01',
           mode: 'countdown',
           targetMs: 5000,
           completedAt: null,
@@ -153,6 +154,7 @@ describe('useAppStore', () => {
           id: 'task-2',
           title: 'Active Countdown',
           createdAt: 1000,
+          dayKey: '1970-01-01',
           mode: 'countdown',
           targetMs: 30000,
           completedAt: null,
@@ -369,5 +371,51 @@ describe('useAppStore', () => {
     expect(importSuccess).toBe(true);
     expect(store3.getState().tasks).toEqual(store1.getState().tasks);
     expect(store3.getState().settings).toEqual(store1.getState().settings);
+  });
+
+  it('moveTaskToDay moves an unfinished task and leaves createdAt and sessions untouched', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    const createdAt = new Date(2026, 7, 1, 10, 0).getTime();
+    const task = store.getState().addTask('Unfinished Task', 'pomodoro', null, createdAt);
+    expect(task.dayKey).toBe('2026-08-01');
+
+    // Add a session logged on day 1
+    store.getState().startTimerFor(task.id, createdAt);
+    store.getState().finish(createdAt + 1800_000);
+    expect(store.getState().sessions).toHaveLength(1);
+    const sessionDayKeyBefore = store.getState().sessions[0]?.dayKey;
+
+    const newDayKey = '2026-08-02';
+    store.getState().moveTaskToDay(task.id, newDayKey);
+
+    const updatedTask = store.getState().tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.dayKey).toBe('2026-08-02');
+    expect(updatedTask?.createdAt).toBe(createdAt);
+    expect(store.getState().sessions[0]?.dayKey).toBe(sessionDayKeyBefore);
+  });
+
+  it('changing dayStartHour recomputes task dayKeys as well as session dayKeys', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    // 01:30 AM local time timestamp on Aug 2, 2026
+    const ts = new Date(2026, 7, 2, 1, 30, 0).getTime();
+    const task = store.getState().addTask('Night Task', 'stopwatch', null, ts);
+    expect(task.dayKey).toBe('2026-08-02');
+
+    // Start & finish a session at 01:30 AM
+    store.getState().startTimerFor(task.id, ts);
+    store.getState().finish(ts + 1800_000);
+
+    expect(store.getState().sessions[0]?.dayKey).toBe('2026-08-02');
+
+    // Change dayStartHour to 4 (so 01:30 AM belongs to Aug 1)
+    store.getState().updateSettings({ dayStartHour: 4 });
+
+    const updatedTask = store.getState().tasks.find((t) => t.id === task.id);
+    expect(updatedTask?.dayKey).toBe('2026-08-01');
+    expect(store.getState().sessions[0]?.dayKey).toBe('2026-08-01');
   });
 });

@@ -210,4 +210,39 @@ describe('Task Management UI', () => {
     expect(t('tasks.completedCount', { count: 2 }, 'ar')).toBe('المكتملة (2)');
     expect(t('tasks.completedCount', { count: 11 }, 'ar')).toBe('المكتملة (11)');
   });
+
+  it("the Dashboard lists only today's tasks", () => {
+    act(() => {
+      useAppStore.getState().addTask("Today's Task", 'stopwatch');
+      const taskYesterday = useAppStore.getState().addTask("Yesterday's Task", 'stopwatch');
+      useAppStore.setState({
+        tasks: useAppStore.getState().tasks.map((t) =>
+          t.id === taskYesterday.id ? { ...t, dayKey: '2020-01-01' } : t
+        ),
+      });
+    });
+
+    render(<TaskList />);
+
+    expect(screen.getByText("Today's Task")).toBeInTheDocument();
+    expect(screen.queryByText("Yesterday's Task")).not.toBeInTheDocument();
+  });
+
+  it('a task from a previous day WITH a running timer still appears on the Dashboard', () => {
+    let taskYesterdayId = '';
+    act(() => {
+      const taskYesterday = useAppStore.getState().addTask("Yesterday's Running Task", 'stopwatch');
+      taskYesterdayId = taskYesterday.id;
+      useAppStore.setState({
+        tasks: useAppStore.getState().tasks.map((t) =>
+          t.id === taskYesterday.id ? { ...t, dayKey: '2020-01-01' } : t
+        ),
+      });
+      useAppStore.getState().startTimerFor(taskYesterdayId, Date.now());
+    });
+
+    render(<TaskList />);
+
+    expect(screen.getByText("Yesterday's Running Task")).toBeInTheDocument();
+  });
 });

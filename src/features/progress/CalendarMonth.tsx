@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Task, Session, Settings } from '../../domain/types';
-import { buildDayRecords } from '../../domain/stats/dayRecords';
+import { buildDayRecords, getDayRecord } from '../../domain/stats/dayRecords';
 import { buildYearIntensity } from '../../domain/tape/layout';
 import { monthKey, dayKeyFromTimestamp, startOfMonth, endOfMonth } from '../../domain/time/dayKey';
 import { formatMonthLabel, formatDuration } from '../../domain/time/format';
@@ -10,22 +10,33 @@ import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { Ltr } from '../../components/Ltr';
 import { buildMonthGrid, addMonths, getWeekdayLabels } from './monthGrid';
+import { DayCard } from './DayCard';
 
 export interface CalendarMonthProps {
   tasks: Task[];
   sessions: Session[];
   settings: Settings;
   locale: Language;
+  selectedDayKey?: string;
+  onSelectDay?: (dayKey: string) => void;
 }
 
-export function CalendarMonth({ tasks, sessions, settings, locale }: CalendarMonthProps) {
+export function CalendarMonth({
+  tasks,
+  sessions,
+  settings,
+  locale,
+  selectedDayKey,
+  onSelectDay,
+}: CalendarMonthProps) {
   const t = useT();
 
   const allRecords = buildDayRecords(tasks, sessions, settings);
 
   const formattedLocale = locale === 'ar' ? 'ar-u-nu-latn' : locale;
 
-  const todayMonthKey = monthKey(dayKeyFromTimestamp(Date.now(), settings.dayStartHour));
+  const todayKey = dayKeyFromTimestamp(Date.now(), settings.dayStartHour);
+  const todayMonthKey = monthKey(todayKey);
 
   let minMonthKey = todayMonthKey;
   let maxMonthKey = todayMonthKey;
@@ -38,6 +49,14 @@ export function CalendarMonth({ tasks, sessions, settings, locale }: CalendarMon
   }
 
   const [currentMonthKey, setCurrentMonthKey] = useState<string>(maxMonthKey);
+  const [internalSelectedDayKey, setInternalSelectedDayKey] = useState<string>(todayKey);
+
+  const activeSelectedDayKey = selectedDayKey ?? internalSelectedDayKey;
+
+  const handleDayClick = (dayKey: string) => {
+    setInternalSelectedDayKey(dayKey);
+    onSelectDay?.(dayKey);
+  };
 
   if (allRecords.length === 0) {
     return <EmptyState title={t('placeholder.progress')} />;
@@ -73,74 +92,94 @@ export function CalendarMonth({ tasks, sessions, settings, locale }: CalendarMon
     intensityMap.set(item.dayKey, { intensity: item.intensity, focusMs: item.focusMs });
   }
 
+  const selectedRecord = getDayRecord(tasks, sessions, settings, activeSelectedDayKey);
+
   return (
-    <Card className="calendar-month-card">
-      <div className="calendar-header">
-        <h3 className="calendar-month-title">{monthLabel}</h3>
-        <div className="calendar-nav">
-          <Button
-            variant="secondary"
-            onClick={handlePrev}
-            disabled={isPrevDisabled}
-            aria-label={t('progress.prevMonth')}
-          >
-            {t('progress.prevMonth')}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleNext}
-            disabled={isNextDisabled}
-            aria-label={t('progress.nextMonth')}
-          >
-            {t('progress.nextMonth')}
-          </Button>
-        </div>
-      </div>
-
-      {/* NO dir="ltr" here: Calendar follows page direction */}
-      <div className="calendar-grid-container">
-        <div className="calendar-weekdays-row">
-          {weekdayLabels.map((lbl, idx) => (
-            <div key={idx} className="calendar-weekday-cell">
-              {lbl}
-            </div>
-          ))}
+    <div className="calendar-month-wrapper">
+      <Card className="calendar-month-card">
+        <div className="calendar-header">
+          <h3 className="calendar-month-title">{monthLabel}</h3>
+          <div className="calendar-nav">
+            <Button
+              variant="secondary"
+              onClick={handlePrev}
+              disabled={isPrevDisabled}
+              aria-label={t('progress.prevMonth')}
+            >
+              {t('progress.prevMonth')}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleNext}
+              disabled={isNextDisabled}
+              aria-label={t('progress.nextMonth')}
+            >
+              {t('progress.nextMonth')}
+            </Button>
+          </div>
         </div>
 
-        <div className="calendar-days-grid">
-          {gridInfo.cells.map((cell, idx) => {
-            if (cell.type === 'blank') {
-              return <div key={`blank-${idx}`} className="calendar-cell calendar-cell-blank" />;
-            }
-
-            const dayData = intensityMap.get(cell.dayKey!);
-            const intensity = dayData?.intensity ?? null;
-            const focusMs = dayData?.focusMs ?? 0;
-            const tooltipStr = `${cell.dayKey}: ${formatDuration(focusMs, formattedLocale)}`;
-
-            return (
-              <div
-                key={cell.dayKey}
-                className={`calendar-cell calendar-cell-day ${intensity !== null ? 'calendar-cell-active' : ''}`}
-                title={tooltipStr}
-              >
-                <span className="calendar-day-number">
-                  <Ltr>{cell.dayNumber}</Ltr>
-                </span>
-                {intensity !== null && (
-                  <div
-                    className="calendar-day-intensity-bar"
-                    style={{
-                      height: `${Math.max(4, Math.round(intensity * 16))}px`,
-                      opacity: Math.max(0.4, intensity),
-                    }}
-                  />
-                )}
+        {/* NO dir="ltr" here: Calendar follows page direction */}
+        <div className="calendar-grid-container">
+          <div className="calendar-weekdays-row">
+            {weekdayLabels.map((lbl, idx) => (
+              <div key={idx} className="calendar-weekday-cell">
+                {lbl}
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          <div className="calendar-days-grid">
+            {gridInfo.cells.map((cell, idx) => {
+              if (cell.type === 'blank') {
+                return <div key={`blank-${idx}`} className="calendar-cell calendar-cell-blank" />;
+              }
+
+              const dayData = intensityMap.get(cell.dayKey!);
+              const intensity = dayData?.intensity ?? null;
+              const focusMs = dayData?.focusMs ?? 0;
+              const tooltipStr = `${cell.dayKey}: ${formatDuration(focusMs, formattedLocale)}`;
+              const isPressed = cell.dayKey === activeSelectedDayKey;
+
+              return (
+                <button
+                  type="button"
+                  key={cell.dayKey}
+                  className={`calendar-cell calendar-cell-day ${intensity !== null ? 'calendar-cell-active' : ''}`}
+                  aria-pressed={isPressed}
+                  onClick={() => handleDayClick(cell.dayKey!)}
+                  title={tooltipStr}
+                >
+                  <span className="calendar-day-number">
+                    <Ltr>{cell.dayNumber}</Ltr>
+                  </span>
+                  {intensity !== null && (
+                    <div
+                      className="calendar-day-intensity-bar"
+                      style={{
+                        height: `${Math.max(4, Math.round(intensity * 16))}px`,
+                        opacity: Math.max(0.4, intensity),
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+      </Card>
+
+      <div className="calendar-selected-day-card" style={{ marginTop: '1rem' }}>
+        <DayCard
+          record={selectedRecord}
+          tasks={tasks}
+          sessions={sessions}
+          settings={settings}
+          locale={locale}
+          selectedDayKey={activeSelectedDayKey}
+          onSelectDay={handleDayClick}
+        />
       </div>
-    </Card>
+    </div>
   );
 }

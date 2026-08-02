@@ -8,6 +8,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     id: 'task-1',
     title: 'Test Task',
     createdAt,
+    dayKey: overrides.dayKey ?? dayKeyFromTimestamp(createdAt, 0),
     mode: 'stopwatch',
     targetMs: null,
     completedAt: null,

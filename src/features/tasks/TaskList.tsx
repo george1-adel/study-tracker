@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useTasks } from '../../store/useAppStore';
+import { useTasks, useActiveTimer } from '../../store/useAppStore';
+import { useTodayKey } from '../useTodayKey';
 import { useT } from '../../i18n';
 import { EmptyState } from '../../components/EmptyState';
 import { TaskRow } from './TaskRow';
@@ -7,10 +8,18 @@ import { TaskRow } from './TaskRow';
 export function TaskList() {
   const t = useT();
   const rawTasks = useTasks();
+  const activeTimer = useActiveTimer();
+  const todayKey = useTodayKey();
 
   const activeTasks = useMemo(
-    () => rawTasks.filter((t) => t.deletedAt === null),
-    [rawTasks]
+    () =>
+      rawTasks.filter((t) => {
+        if (t.deletedAt !== null) return false;
+        if (t.dayKey === todayKey) return true;
+        if (activeTimer !== null && activeTimer.taskId === t.id) return true;
+        return false;
+      }),
+    [rawTasks, todayKey, activeTimer]
   );
 
   const pendingTasks = useMemo(

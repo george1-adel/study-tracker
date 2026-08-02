@@ -47,6 +47,7 @@ export const ar: ArabicTranslations = {
   'tasks.delete': 'حذف المهمة',
   'tasks.deleteTitle': 'حذف المهمة',
   'tasks.deleteConfirm': 'هل تريد حذف هذه المهمة؟ سيتم الاحتفاظ بوقت التركيز المسجل وسجل الجلسات.',
+  'tasks.moveToToday': 'نقل إلى اليوم',
   'tasks.empty': 'لا توجد مهمات بعد. أضف مهمة أعلاه للبدء.',
   'tasks.pendingCount': {
     zero: 'قيد الانتظار ({count})',

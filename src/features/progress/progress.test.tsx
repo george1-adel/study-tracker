@@ -65,6 +65,7 @@ describe('Progress Feature & Components', () => {
     const { container } = render(
       <DayTimeline
         records={records}
+        tasks={[]}
         sessions={sessions}
         settings={defaultSettings}
         locale="en"
@@ -76,6 +77,69 @@ describe('Progress Feature & Components', () => {
     // March 12, 2026 should be first (most recent), then March 10, 2026
     expect(dateHeadings[0]?.textContent).toContain('March 12');
     expect(dateHeadings[1]?.textContent).toContain('March 10');
+  });
+
+  it('selecting a day on the Progress page lists that day\'s tasks; a day with none shows the empty state', () => {
+    const ts1 = new Date(2026, 2, 10, 10, 0).getTime();
+    const sessions: Session[] = [
+      {
+        id: 's-1',
+        taskId: 't-1',
+        kind: 'stopwatch',
+        startedAt: ts1,
+        endedAt: ts1 + 1800_000,
+        durationMs: 1800_000,
+        dayKey: '2026-03-10',
+        completed: true,
+      },
+    ];
+
+    const tasks = [
+      {
+        id: 't-1',
+        title: 'March 10 Task',
+        createdAt: ts1,
+        dayKey: '2026-03-10',
+        mode: 'stopwatch' as const,
+        targetMs: null,
+        completedAt: null,
+        completedDayKey: null,
+        deletedAt: null,
+        categoryId: null,
+        tags: [],
+        notes: null,
+      },
+    ];
+
+    const records = buildDayRecords(tasks, sessions, defaultSettings);
+
+    const { rerender } = render(
+      <DayTimeline
+        records={records}
+        tasks={tasks}
+        sessions={sessions}
+        settings={defaultSettings}
+        locale="en"
+        selectedDayKey="2026-03-10"
+      />
+    );
+
+    expect(screen.getByText('March 10 Task')).toBeInTheDocument();
+
+    // Rerender with empty tasks for March 10
+    rerender(
+      <DayTimeline
+        records={records}
+        tasks={[]}
+        sessions={sessions}
+        settings={defaultSettings}
+        locale="en"
+        selectedDayKey="2026-03-10"
+      />
+    );
+
+    expect(screen.queryByText('March 10 Task')).not.toBeInTheDocument();
+    expect(screen.getByText('No tasks yet. Add a task above to get started.')).toBeInTheDocument();
   });
 
   it('previous/next month controls disable at the data edges', () => {

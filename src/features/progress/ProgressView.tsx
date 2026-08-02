@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { buildDayRecords } from '../../domain/stats/dayRecords';
+import { useTodayKey } from '../useTodayKey';
 import { useT } from '../../i18n';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -12,8 +13,10 @@ export function ProgressView() {
   const tasks = useAppStore((s) => s.tasks);
   const sessions = useAppStore((s) => s.sessions);
   const settings = useAppStore((s) => s.settings);
+  const todayKey = useTodayKey();
 
   const [view, setView] = useState<'timeline' | 'calendar'>('timeline');
+  const [selectedDayKey, setSelectedDayKey] = useState<string>(todayKey);
 
   const records = buildDayRecords(tasks, sessions, settings);
 
@@ -45,9 +48,12 @@ export function ProgressView() {
         {view === 'timeline' ? (
           <DayTimeline
             records={records}
+            tasks={tasks}
             sessions={sessions}
             settings={settings}
             locale={settings.language}
+            selectedDayKey={selectedDayKey}
+            onSelectDay={setSelectedDayKey}
           />
         ) : (
           <CalendarMonth
@@ -55,6 +61,8 @@ export function ProgressView() {
             sessions={sessions}
             settings={settings}
             locale={settings.language}
+            selectedDayKey={selectedDayKey}
+            onSelectDay={setSelectedDayKey}
           />
         )}
       </div>

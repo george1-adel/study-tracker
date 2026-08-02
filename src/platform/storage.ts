@@ -112,7 +112,10 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
 
   const obj = raw as Record<string, unknown>;
 
-  if (obj.schemaVersion !== SCHEMA_VERSION) {
+  const isV1 = obj.schemaVersion === 1;
+  const isV2 = obj.schemaVersion === 2;
+
+  if (!isV1 && !isV2) {
     return { state: emptyState(), recovered: true };
   }
 
@@ -131,8 +134,12 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
     recovered = true;
   } else {
     for (const item of obj.tasks) {
-      if (isValidTask(item)) {
-        tasks.push(item as Task);
+      const validated = validateTask(item, settings.dayStartHour, isV1);
+      if (validated.task) {
+        tasks.push(validated.task);
+        if (validated.repaired) {
+          recovered = true;
+        }
       } else {
         recovered = true;
       }
@@ -383,21 +390,30 @@ function validateSettings(rawSettings: unknown): { settings: Settings; settingsR
   return { settings, settingsRecovered };
 }
 
-function isValidTask(item: unknown): boolean {
-  if (typeof item !== 'object' || item === null || Array.isArray(item)) return false;
+function validateTask(
+  item: unknown,
+  dayStartHour: number,
+  isV1: boolean
+): { task: Task | null; repaired: boolean } {
+  if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+    return { task: null, repaired: false };
+  }
   const t = item as Record<string, unknown>;
 
-  if (typeof t.id !== 'string' || t.id.length === 0) return false;
-  if (typeof t.title !== 'string') return false;
-  if (typeof t.createdAt !== 'number' || !Number.isFinite(t.createdAt) || t.createdAt < 0) return false;
+  if (typeof t.id !== 'string' || t.id.length === 0) return { task: null, repaired: false };
+  if (typeof t.title !== 'string') return { task: null, repaired: false };
+  if (typeof t.createdAt !== 'number' || !Number.isFinite(t.createdAt) || t.createdAt < 0)
+    return { task: null, repaired: false };
 
   const validModes: TimerMode[] = ['stopwatch', 'countdown', 'pomodoro'];
-  if (typeof t.mode !== 'string' || !validModes.includes(t.mode as TimerMode)) return false;
+  if (typeof t.mode !== 'string' || !validModes.includes(t.mode as TimerMode))
+    return { task: null, repaired: false };
 
   if (t.mode === 'countdown') {
-    if (typeof t.targetMs !== 'number' || !Number.isFinite(t.targetMs) || t.targetMs <= 0) return false;
+    if (typeof t.targetMs !== 'number' || !Number.isFinite(t.targetMs) || t.targetMs <= 0)
+      return { task: null, repaired: false };
   } else {
-    if (t.targetMs !== null) return false;
+    if (t.targetMs !== null) return { task: null, repaired: false };
   }
 
   if (t.completedAt === null && t.completedDayKey === null) {
@@ -410,22 +426,54 @@ function isValidTask(item: unknown): boolean {
   ) {
     // ok
   } else {
-    return false;
+    return { task: null, repaired: false };
   }
 
   if (t.deletedAt !== null) {
     if (typeof t.deletedAt !== 'number' || !Number.isFinite(t.deletedAt) || t.deletedAt < 0) {
-      return false;
+      return { task: null, repaired: false };
     }
   }
 
-  if (t.categoryId !== null && typeof t.categoryId !== 'string') return false;
+  if (t.categoryId !== null && typeof t.categoryId !== 'string')
+    return { task: null, repaired: false };
 
-  if (!Array.isArray(t.tags) || !t.tags.every((tag) => typeof tag === 'string')) return false;
+  if (!Array.isArray(t.tags) || !t.tags.every((tag) => typeof tag === 'string'))
+    return { task: null, repaired: false };
 
-  if (t.notes !== null && typeof t.notes !== 'string') return false;
+  if (t.notes !== null && typeof t.notes !== 'string')
+    return { task: null, repaired: false };
 
-  return true;
+  let dayKey: string;
+  let repaired = false;
+
+  if (isV1) {
+    dayKey = dayKeyFromTimestamp(t.createdAt as number, dayStartHour);
+  } else {
+    if (isValidDayKey(t.dayKey)) {
+      dayKey = t.dayKey as string;
+    } else {
+      dayKey = dayKeyFromTimestamp(t.createdAt as number, dayStartHour);
+      repaired = true;
+    }
+  }
+
+  const task: Task = {
+    id: t.id as string,
+    title: t.title as string,
+    createdAt: t.createdAt as number,
+    dayKey,
+    mode: t.mode as TimerMode,
+    targetMs: t.targetMs as number | null,
+    completedAt: t.completedAt as number | null,
+    completedDayKey: t.completedDayKey as string | null,
+    deletedAt: t.deletedAt as number | null,
+    categoryId: t.categoryId as string | null,
+    tags: t.tags as string[],
+    notes: t.notes as string | null,
+  };
+
+  return { task, repaired };
 }
 
 function validateSession(

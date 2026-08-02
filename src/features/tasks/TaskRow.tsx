@@ -6,13 +6,17 @@ import { dayKeyFromTimestamp } from '../../domain/time/dayKey';
 import { formatDayLabel, formatDuration } from '../../domain/time/format';
 import { Checkbox } from '../../components/Checkbox';
 import { IconButton } from '../../components/IconButton';
+import { Button } from '../../components/Button';
 import { Ltr } from '../../components/Ltr';
 import { TaskEditDialog } from './TaskEditDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { TimerControls } from '../timer';
+import { useTodayKey } from '../useTodayKey';
 
 export interface TaskRowProps {
   task: Task;
+  hideTimer?: boolean;
+  showMoveToToday?: boolean;
 }
 
 const MODE_KEY_MAP: Record<Task['mode'], 'tasks.mode.stopwatch' | 'tasks.mode.countdown' | 'tasks.mode.pomodoro'> = {
@@ -21,10 +25,12 @@ const MODE_KEY_MAP: Record<Task['mode'], 'tasks.mode.stopwatch' | 'tasks.mode.co
   pomodoro: 'tasks.mode.pomodoro',
 };
 
-export function TaskRow({ task }: TaskRowProps) {
+export function TaskRow({ task, hideTimer = false, showMoveToToday = false }: TaskRowProps) {
   const t = useT();
   const settings = useSettings();
   const toggleTaskCompleted = useAppStore((s) => s.toggleTaskCompleted);
+  const moveTaskToDay = useAppStore((s) => s.moveTaskToDay);
+  const todayKey = useTodayKey();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,8 +38,8 @@ export function TaskRow({ task }: TaskRowProps) {
   const isCompleted = task.completedAt !== null || task.completedDayKey !== null;
 
   const dayKey = useMemo(
-    () => dayKeyFromTimestamp(task.createdAt, settings.dayStartHour),
-    [task.createdAt, settings.dayStartHour]
+    () => task.dayKey ?? dayKeyFromTimestamp(task.createdAt, settings.dayStartHour),
+    [task.dayKey, task.createdAt, settings.dayStartHour]
   );
 
   const locale = settings.language === 'ar' ? 'ar-u-nu-latn' : 'en';
@@ -53,6 +59,12 @@ export function TaskRow({ task }: TaskRowProps) {
   const handleToggle = () => {
     toggleTaskCompleted(task.id, Date.now());
   };
+
+  const handleMoveToToday = () => {
+    moveTaskToDay(task.id, todayKey);
+  };
+
+  const canMove = showMoveToToday && !isCompleted && task.dayKey !== todayKey;
 
   return (
     <div className="task-row">
@@ -74,9 +86,19 @@ export function TaskRow({ task }: TaskRowProps) {
         {formattedDuration && <Ltr className="task-target-duration">{formattedDuration}</Ltr>}
       </div>
 
-      <div className="task-timer-slot" data-testid="task-timer-slot">
-        <TimerControls task={task} />
-      </div>
+      {!hideTimer && (
+        <div className="task-timer-slot" data-testid="task-timer-slot">
+          <TimerControls task={task} />
+        </div>
+      )}
+
+      {canMove && (
+        <div className="task-move-slot">
+          <Button variant="secondary" onClick={handleMoveToToday}>
+            {t('tasks.moveToToday')}
+          </Button>
+        </div>
+      )}
 
       <div className="task-row-actions">
         <IconButton aria-label={t('tasks.edit')} onClick={() => setIsEditing(true)}>

@@ -24,6 +24,7 @@ interface Task {
   id: string;
   title: string;
   createdAt: number;
+  dayKey: DayKey;               // the local day this task belongs to
   mode: TimerMode;
   targetMs: number | null;      // required for 'countdown', null for 'stopwatch'
   completedAt: number | null;
@@ -37,6 +38,15 @@ interface Task {
 ```
 
 **Invariants**
+
+0. **A task belongs to one day.** The Dashboard is a page for a single day and shows only tasks whose
+   `dayKey` is today — at midnight it is empty and yesterday's tasks stay on yesterday, browsable
+   from the Progress page. `dayKey` is stored, not derived from `createdAt`, because an unfinished
+   task can be **moved** to today and the move must persist.
+   Two rules make this safe: a task with a **running timer** is always shown on the Dashboard even
+   when its `dayKey` is an earlier day, or a timer running across midnight could never be stopped;
+   and moving a task **never re-dates its sessions**, because the time really was worked on the
+   original day and the history must keep saying so.
 
 1. `completedAt` and `completedDayKey` are set and cleared **together**. Never one without the other.
 2. `deletedAt !== null` hides the task from all UI but its sessions remain in `sessions[]` and
@@ -142,7 +152,8 @@ interface Settings {
 ```
 
 `dayStartHour` shifts what counts as "today": with `dayStartHour = 4`, work at 01:30 belongs to the
-previous calendar day. Changing it **recomputes** the `dayKey` of every stored session.
+previous calendar day. Changing it **recomputes** the `dayKey` of every stored session, every
+task's `completedDayKey`, and every task's own `dayKey`.
 
 ---
 
@@ -150,7 +161,7 @@ previous calendar day. Changing it **recomputes** the `dayKey` of every stored s
 
 ```ts
 interface PersistedState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   tasks: Task[];
   sessions: Session[];
   settings: Settings;

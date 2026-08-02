@@ -1,5 +1,5 @@
 import { render, screen, act } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useAppStore } from '../../store/useAppStore';
 import { TodayTape } from './TodayTape';
 import { dayKeyFromTimestamp } from '../../domain/time/dayKey';
@@ -9,6 +9,10 @@ describe('TodayTape Feature Component', () => {
     act(() => {
       useAppStore.getState().resetAll();
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders tape container with dir="ltr" and empty state placeholder when no sessions exist', () => {
@@ -59,6 +63,8 @@ describe('TodayTape Feature Component', () => {
 
   it('a day containing a sub-minute focus session reports the EXACT true total (3h 5m, not 3h 9m)', () => {
     const baseTs = new Date(2026, 7, 1, 8, 0).getTime(); // 08:00 on 2026-08-01
+    vi.useFakeTimers();
+    vi.setSystemTime(baseTs);
     const dayKey = dayKeyFromTimestamp(baseTs, 0);
 
     const s1 = { id: 's1', taskId: 't1', kind: 'stopwatch' as const, startedAt: baseTs, endedAt: baseTs + 40 * 60_000, durationMs: 40 * 60_000, dayKey, completed: true }; // 40m
@@ -83,6 +89,8 @@ describe('TodayTape Feature Component', () => {
 
   it('a focus session that crosses midnight is not under-reported in the summary', () => {
     const startTs = new Date(2026, 7, 1, 22, 0).getTime(); // 22:00
+    vi.useFakeTimers();
+    vi.setSystemTime(startTs);
     const endTs = startTs + 4 * 3600_000; // 02:00 next day (4 hours total)
     const dayKey = dayKeyFromTimestamp(startTs, 0);
 
@@ -112,6 +120,8 @@ describe('TodayTape Feature Component', () => {
 
   it('the "most recent" clause names the most recent FOCUS session when a break started later', () => {
     const focusStart = new Date(2026, 7, 1, 10, 0).getTime();
+    vi.useFakeTimers();
+    vi.setSystemTime(focusStart);
     const focusEnd = new Date(2026, 7, 1, 11, 0).getTime();
     const breakStart = new Date(2026, 7, 1, 11, 0).getTime();
     const breakEnd = new Date(2026, 7, 1, 11, 15).getTime();

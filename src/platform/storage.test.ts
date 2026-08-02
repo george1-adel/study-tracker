@@ -18,6 +18,7 @@ describe('platform/storage', () => {
           id: 'task-1',
           title: 'Math Study',
           createdAt: 1700000000000,
+          dayKey: '2023-11-14',
           mode: 'stopwatch',
           targetMs: null,
           completedAt: null,
@@ -66,10 +67,10 @@ describe('platform/storage', () => {
     }
   });
 
-  it("handles schemaVersion 0, 2, missing, 'x' -> defaults, recovered true", () => {
+  it("handles schemaVersion 0, 3, missing, 'x' -> defaults, recovered true", () => {
     const badVersions = [
       JSON.stringify({ ...emptyState(), schemaVersion: 0 }),
-      JSON.stringify({ ...emptyState(), schemaVersion: 2 }),
+      JSON.stringify({ ...emptyState(), schemaVersion: 3 }),
       JSON.stringify({ tasks: [], sessions: [], settings: DEFAULT_SETTINGS }),
       JSON.stringify({ ...emptyState(), schemaVersion: 'x' }),
     ];
@@ -87,6 +88,7 @@ describe('platform/storage', () => {
       id: 'task-1',
       title: 'Valid 1',
       createdAt: 1000,
+      dayKey: '1970-01-01',
       mode: 'stopwatch',
       targetMs: null,
       completedAt: null,
@@ -100,6 +102,7 @@ describe('platform/storage', () => {
       id: 'task-2',
       title: 'Valid 2',
       createdAt: 2000,
+      dayKey: '1970-01-01',
       mode: 'countdown',
       targetMs: 1800000,
       completedAt: null,
@@ -268,5 +271,87 @@ describe('platform/storage', () => {
     }).not.toThrow();
 
     vi.restoreAllMocks();
+  });
+
+  it("a v1 blob migrates to v2 with each task's dayKey derived from its createdAt, and NO data lost", () => {
+    // 2026-08-01 10:00:00 local time timestamp
+    const createdAt = new Date(2026, 7, 1, 10, 0, 0).getTime();
+    const v1Blob = {
+      schemaVersion: 1,
+      tasks: [
+        {
+          id: 'v1-task-1',
+          title: 'V1 Task',
+          createdAt,
+          mode: 'stopwatch',
+          targetMs: null,
+          completedAt: null,
+          completedDayKey: null,
+          deletedAt: null,
+          categoryId: null,
+          tags: [],
+          notes: null,
+        },
+      ],
+      sessions: [],
+      settings: DEFAULT_SETTINGS,
+      activeTimer: null,
+    };
+
+    const adapter = createMemoryAdapter(JSON.stringify(v1Blob));
+    const loaded = loadState(adapter);
+
+    expect(loaded.recovered).toBe(false);
+    expect(loaded.state.schemaVersion).toBe(2);
+    expect(loaded.state.tasks.length).toBe(1);
+    expect(loaded.state.tasks[0]?.dayKey).toBe('2026-08-01');
+  });
+
+  it('a v2 task with a missing or invalid dayKey is repaired from createdAt, not dropped', () => {
+    const createdAt = new Date(2026, 7, 1, 10, 0, 0).getTime();
+    const v2BlobMissingDayKey = {
+      schemaVersion: 2,
+      tasks: [
+        {
+          id: 'v2-task-missing',
+          title: 'Missing DayKey Task',
+          createdAt,
+          // dayKey omitted
+          mode: 'stopwatch',
+          targetMs: null,
+          completedAt: null,
+          completedDayKey: null,
+          deletedAt: null,
+          categoryId: null,
+          tags: [],
+          notes: null,
+        },
+        {
+          id: 'v2-task-invalid',
+          title: 'Invalid DayKey Task',
+          createdAt,
+          dayKey: 'invalid-day-key-str',
+          mode: 'stopwatch',
+          targetMs: null,
+          completedAt: null,
+          completedDayKey: null,
+          deletedAt: null,
+          categoryId: null,
+          tags: [],
+          notes: null,
+        },
+      ],
+      sessions: [],
+      settings: DEFAULT_SETTINGS,
+      activeTimer: null,
+    };
+
+    const adapter = createMemoryAdapter(JSON.stringify(v2BlobMissingDayKey));
+    const loaded = loadState(adapter);
+
+    expect(loaded.recovered).toBe(true);
+    expect(loaded.state.tasks.length).toBe(2);
+    expect(loaded.state.tasks[0]?.dayKey).toBe('2026-08-01');
+    expect(loaded.state.tasks[1]?.dayKey).toBe('2026-08-01');
   });
 });

@@ -55,6 +55,7 @@ export const en = {
   'tasks.delete': 'Delete task',
   'tasks.deleteTitle': 'Delete task',
   'tasks.deleteConfirm': 'Delete this task? Recorded focus time and session history will be kept.',
+  'tasks.moveToToday': 'Move to today',
   'tasks.empty': 'No tasks yet. Add a task above to get started.',
   'tasks.pendingCount': {
     one: 'Pending ({count})',

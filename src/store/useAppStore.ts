@@ -44,6 +44,7 @@ export interface AppActions {
   editTask(id: string, patch: Partial<Omit<Task, 'id' | 'createdAt'>>): void;
   deleteTask(id: string, now?: number): void;
   toggleTaskCompleted(id: string, now: number): void;
+  moveTaskToDay(taskId: string, dayKey: string): void;
   startTimerFor(taskId: string, now: number): void;
   pause(now: number): void;
   resume(now: number): void;
@@ -129,6 +130,7 @@ export function createAppStore(
         id: crypto.randomUUID(),
         title: trimmedTitle,
         createdAt: timestamp,
+        dayKey: dayKeyFromTimestamp(timestamp, get().settings.dayStartHour),
         mode,
         targetMs: mode === 'countdown' ? (targetMs ?? null) : null,
         completedAt: null,
@@ -225,6 +227,27 @@ export function createAppStore(
         sessions: nextSessions,
         activeTimer: nextActiveTimer,
       });
+      saveState(adapter, getPersistedSlice(get()));
+    },
+
+    moveTaskToDay(taskId: string, dayKey: string): void {
+      const { tasks } = get();
+      const existing = tasks.find((t) => t.id === taskId);
+      if (!existing || existing.deletedAt !== null) return;
+      // A completed task cannot be moved
+      if (existing.completedAt !== null || existing.completedDayKey !== null) return;
+      // Moving a task to the day it is already on is a no-op
+      if (existing.dayKey === dayKey) return;
+
+      // Sets that task's dayKey. Nothing else changes: createdAt stays, completedAt/completedDayKey stay untouched,
+      // and its sessions are NOT re-dated — the time was genuinely worked on the original day and the history must keep saying so.
+      const updated: Task = {
+        ...existing,
+        dayKey,
+      };
+
+      const nextTasks = tasks.map((t) => (t.id === taskId ? updated : t));
+      set({ tasks: nextTasks });
       saveState(adapter, getPersistedSlice(get()));
     },
 
@@ -427,11 +450,14 @@ export function createAppStore(
           ...s,
           dayKey: dayKeyFromTimestamp(s.startedAt, newDayStart),
         }));
-        nextTasks = tasks.map((t) =>
-          t.completedAt !== null
-            ? { ...t, completedDayKey: dayKeyFromTimestamp(t.completedAt, newDayStart) }
-            : t
-        );
+        nextTasks = tasks.map((t) => ({
+          ...t,
+          dayKey: dayKeyFromTimestamp(t.createdAt, newDayStart),
+          completedDayKey:
+            t.completedAt !== null
+              ? dayKeyFromTimestamp(t.completedAt, newDayStart)
+              : null,
+        }));
       }
 
       set({
