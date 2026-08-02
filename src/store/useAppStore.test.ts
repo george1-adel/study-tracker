@@ -140,6 +140,7 @@ describe('useAppStore', () => {
           id: 'task-1',
           title: 'Expired Countdown',
           createdAt: 1000,
+          updatedAt: 1000,
           dayKey: '1970-01-01',
           mode: 'countdown',
           targetMs: 5000,
@@ -154,6 +155,7 @@ describe('useAppStore', () => {
           id: 'task-2',
           title: 'Active Countdown',
           createdAt: 1000,
+          updatedAt: 1000,
           dayKey: '1970-01-01',
           mode: 'countdown',
           targetMs: 30000,
@@ -167,6 +169,7 @@ describe('useAppStore', () => {
       ],
       sessions: [],
       settings: DEFAULT_SETTINGS,
+      settingsUpdatedAt: 0,
       activeTimer: {
         taskId: 'task-1',
         kind: 'countdown',
@@ -417,5 +420,40 @@ describe('useAppStore', () => {
     const updatedTask = store.getState().tasks.find((t) => t.id === task.id);
     expect(updatedTask?.dayKey).toBe('2026-08-01');
     expect(store.getState().sessions[0]?.dayKey).toBe('2026-08-01');
+  });
+
+  it('updates task updatedAt on addTask, editTask, deleteTask, toggleTaskCompleted, moveTaskToDay, and timer finish', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    // addTask
+    const t1 = store.getState().addTask('Task 1', 'stopwatch', null, 1000);
+    expect(t1.updatedAt).toBe(1000);
+
+    // editTask
+    store.getState().editTask(t1.id, { title: 'Task 1 Edited' }, 2000);
+    expect(store.getState().tasks[0]?.updatedAt).toBe(2000);
+
+    // toggleTaskCompleted
+    store.getState().toggleTaskCompleted(t1.id, 3000);
+    expect(store.getState().tasks[0]?.updatedAt).toBe(3000);
+
+    // moveTaskToDay
+    const t2 = store.getState().addTask('Task 2', 'stopwatch', null, 4000);
+    store.getState().moveTaskToDay(t2.id, '2026-08-10', 5000);
+    expect(store.getState().tasks.find((t) => t.id === t2.id)?.updatedAt).toBe(5000);
+
+    // deleteTask
+    store.getState().deleteTask(t1.id, 6000);
+    expect(store.getState().tasks.find((t) => t.id === t1.id)?.updatedAt).toBe(6000);
+  });
+
+  it('updates settingsUpdatedAt on updateSettings', () => {
+    const adapter = createMemoryAdapter();
+    const store = createAppStore(adapter);
+
+    expect(store.getState().settingsUpdatedAt).toBe(0);
+    store.getState().updateSettings({ theme: 'light' }, 12345);
+    expect(store.getState().settingsUpdatedAt).toBe(12345);
   });
 });

@@ -99,6 +99,7 @@ describe('Progress Feature & Components', () => {
         id: 't-1',
         title: 'March 10 Task',
         createdAt: ts1,
+        updatedAt: ts1,
         dayKey: '2026-03-10',
         mode: 'stopwatch' as const,
         targetMs: null,

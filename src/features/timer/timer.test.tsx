@@ -608,6 +608,7 @@ describe('timer feature', () => {
       id: 'completed-task-1',
       title: 'Completed Task',
       createdAt: 1000,
+      updatedAt: 5000,
       dayKey: '2026-08-01',
       mode: 'stopwatch' as const,
       targetMs: null,

@@ -114,8 +114,9 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
 
   const isV1 = obj.schemaVersion === 1;
   const isV2 = obj.schemaVersion === 2;
+  const isV3 = obj.schemaVersion === 3;
 
-  if (!isV1 && !isV2) {
+  if (!isV1 && !isV2 && !isV3) {
     return { state: emptyState(), recovered: true };
   }
 
@@ -127,6 +128,17 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
     recovered = true;
   }
 
+  let settingsUpdatedAt = 0;
+  if (
+    typeof obj.settingsUpdatedAt === 'number' &&
+    Number.isFinite(obj.settingsUpdatedAt) &&
+    obj.settingsUpdatedAt >= 0
+  ) {
+    settingsUpdatedAt = obj.settingsUpdatedAt;
+  } else if (isV3) {
+    recovered = true;
+  }
+
   // 2. Tasks
   let tasks: Task[] = [];
   if (!Array.isArray(obj.tasks)) {
@@ -134,7 +146,7 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
     recovered = true;
   } else {
     for (const item of obj.tasks) {
-      const validated = validateTask(item, settings.dayStartHour, isV1);
+      const validated = validateTask(item, settings.dayStartHour, isV1, isV2);
       if (validated.task) {
         tasks.push(validated.task);
         if (validated.repaired) {
@@ -181,6 +193,7 @@ function migrateWithResult(raw: unknown): { state: PersistedState; recovered: bo
     tasks,
     sessions,
     settings,
+    settingsUpdatedAt,
     activeTimer,
   };
 
@@ -393,7 +406,8 @@ function validateSettings(rawSettings: unknown): { settings: Settings; settingsR
 function validateTask(
   item: unknown,
   dayStartHour: number,
-  isV1: boolean
+  isV1: boolean,
+  isV2: boolean
 ): { task: Task | null; repaired: boolean } {
   if (typeof item !== 'object' || item === null || Array.isArray(item)) {
     return { task: null, repaired: false };
@@ -458,10 +472,21 @@ function validateTask(
     }
   }
 
+  let updatedAt: number;
+  if (typeof t.updatedAt === 'number' && Number.isFinite(t.updatedAt) && t.updatedAt >= 0) {
+    updatedAt = t.updatedAt;
+  } else {
+    updatedAt = (t.completedAt as number | null) ?? (t.createdAt as number);
+    if (!isV1 && !isV2) {
+      repaired = true;
+    }
+  }
+
   const task: Task = {
     id: t.id as string,
     title: t.title as string,
     createdAt: t.createdAt as number,
+    updatedAt,
     dayKey,
     mode: t.mode as TimerMode,
     targetMs: t.targetMs as number | null,

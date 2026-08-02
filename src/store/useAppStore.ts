@@ -34,6 +34,7 @@ export interface AppState {
   tasks: Task[];
   sessions: Session[];
   settings: Settings;
+  settingsUpdatedAt: number;
   activeTimer: ActiveTimer | null;
   recovered: boolean;
   lastCompletion: { sessionId: string; kind: SessionKind; silent: boolean } | null;
@@ -41,16 +42,16 @@ export interface AppState {
 
 export interface AppActions {
   addTask(title: string, mode: TimerMode, targetMs?: number | null, now?: number): Task;
-  editTask(id: string, patch: Partial<Omit<Task, 'id' | 'createdAt'>>): void;
+  editTask(id: string, patch: Partial<Omit<Task, 'id' | 'createdAt'>>, now?: number): void;
   deleteTask(id: string, now?: number): void;
   toggleTaskCompleted(id: string, now: number): void;
-  moveTaskToDay(taskId: string, dayKey: string): void;
+  moveTaskToDay(taskId: string, dayKey: string, now?: number): void;
   startTimerFor(taskId: string, now: number): void;
   pause(now: number): void;
   resume(now: number): void;
   finish(now: number): void;
   startNextPomodoroPhase(now: number): void;
-  updateSettings(patch: Partial<Settings>): void;
+  updateSettings(patch: Partial<Settings>, now?: number): void;
   exportState(): string;
   importState(raw: string): boolean;
   resetAll(): void;
@@ -68,6 +69,7 @@ function getPersistedSlice(state: AppState): PersistedState {
     tasks: state.tasks,
     sessions: state.sessions,
     settings: state.settings,
+    settingsUpdatedAt: state.settingsUpdatedAt,
     activeTimer: state.activeTimer,
   };
 }
@@ -80,6 +82,7 @@ export function createAppStore(
   let tasks = loaded.state.tasks;
   let sessions = loaded.state.sessions;
   const settings = loaded.state.settings;
+  const settingsUpdatedAt = loaded.state.settingsUpdatedAt;
   let activeTimer = loaded.state.activeTimer;
   const recovered = loaded.recovered;
   let lastCompletion: AppState['lastCompletion'] = null;
@@ -102,7 +105,9 @@ export function createAppStore(
     if (completesTask) {
       const dayKey = dayKeyFromTimestamp(initialNow, settings.dayStartHour);
       tasks = tasks.map((t) =>
-        t.id === activeTimer!.taskId ? { ...t, completedAt: initialNow, completedDayKey: dayKey } : t
+        t.id === activeTimer!.taskId
+          ? { ...t, completedAt: initialNow, completedDayKey: dayKey, updatedAt: initialNow }
+          : t
       );
     }
     activeTimer = null;
@@ -111,6 +116,7 @@ export function createAppStore(
       tasks,
       sessions,
       settings,
+      settingsUpdatedAt,
       activeTimer,
     });
   }
@@ -119,6 +125,7 @@ export function createAppStore(
     tasks,
     sessions,
     settings,
+    settingsUpdatedAt,
     activeTimer,
     recovered,
     lastCompletion,
@@ -130,6 +137,7 @@ export function createAppStore(
         id: crypto.randomUUID(),
         title: trimmedTitle,
         createdAt: timestamp,
+        updatedAt: timestamp,
         dayKey: dayKeyFromTimestamp(timestamp, get().settings.dayStartHour),
         mode,
         targetMs: mode === 'countdown' ? (targetMs ?? null) : null,
@@ -147,16 +155,18 @@ export function createAppStore(
       return newTask;
     },
 
-    editTask(id: string, patch: Partial<Omit<Task, 'id' | 'createdAt'>>): void {
+    editTask(id: string, patch: Partial<Omit<Task, 'id' | 'createdAt'>>, now?: number): void {
       const { tasks } = get();
       const existing = tasks.find((t) => t.id === id);
       if (!existing) return;
 
+      const timestamp = now ?? Date.now();
       const updated: Task = {
         ...existing,
         ...patch,
         id: existing.id,
         createdAt: existing.createdAt,
+        updatedAt: timestamp,
       };
 
       if (updated.mode === 'countdown') {
@@ -181,6 +191,7 @@ export function createAppStore(
       const updated: Task = {
         ...existing,
         deletedAt: timestamp,
+        updatedAt: timestamp,
       };
 
       const nextTasks = tasks.map((t) => (t.id === id ? updated : t));
@@ -214,11 +225,12 @@ export function createAppStore(
       }
 
       const updated: Task = isCompleted
-        ? { ...existing, completedAt: null, completedDayKey: null }
+        ? { ...existing, completedAt: null, completedDayKey: null, updatedAt: now }
         : {
             ...existing,
             completedAt: now,
             completedDayKey: dayKeyFromTimestamp(now, settings.dayStartHour),
+            updatedAt: now,
           };
 
       const nextTasks = tasks.map((t) => (t.id === id ? updated : t));
@@ -230,7 +242,7 @@ export function createAppStore(
       saveState(adapter, getPersistedSlice(get()));
     },
 
-    moveTaskToDay(taskId: string, dayKey: string): void {
+    moveTaskToDay(taskId: string, dayKey: string, now?: number): void {
       const { tasks } = get();
       const existing = tasks.find((t) => t.id === taskId);
       if (!existing || existing.deletedAt !== null) return;
@@ -239,11 +251,11 @@ export function createAppStore(
       // Moving a task to the day it is already on is a no-op
       if (existing.dayKey === dayKey) return;
 
-      // Sets that task's dayKey. Nothing else changes: createdAt stays, completedAt/completedDayKey stay untouched,
-      // and its sessions are NOT re-dated — the time was genuinely worked on the original day and the history must keep saying so.
+      const timestamp = now ?? Date.now();
       const updated: Task = {
         ...existing,
         dayKey,
+        updatedAt: timestamp,
       };
 
       const nextTasks = tasks.map((t) => (t.id === taskId ? updated : t));
@@ -280,7 +292,9 @@ export function createAppStore(
         if (completesTask) {
           const dayKey = dayKeyFromTimestamp(now, settings.dayStartHour);
           nextTasks = nextTasks.map((t) =>
-            t.id === activeTimer.taskId ? { ...t, completedAt: now, completedDayKey: dayKey } : t
+            t.id === activeTimer.taskId
+              ? { ...t, completedAt: now, completedDayKey: dayKey, updatedAt: now }
+              : t
           );
         }
       }
@@ -360,7 +374,9 @@ export function createAppStore(
       if (completesTask) {
         const dayKey = dayKeyFromTimestamp(now, settings.dayStartHour);
         nextTasks = tasks.map((t) =>
-          t.id === activeTimer.taskId ? { ...t, completedAt: now, completedDayKey: dayKey } : t
+          t.id === activeTimer.taskId
+            ? { ...t, completedAt: now, completedDayKey: dayKey, updatedAt: now }
+            : t
         );
       }
 
@@ -401,7 +417,9 @@ export function createAppStore(
       if (completesTask) {
         const dayKey = dayKeyFromTimestamp(now, settings.dayStartHour);
         nextTasks = tasks.map((t) =>
-          t.id === activeTimer.taskId ? { ...t, completedAt: now, completedDayKey: dayKey } : t
+          t.id === activeTimer.taskId
+            ? { ...t, completedAt: now, completedDayKey: dayKey, updatedAt: now }
+            : t
         );
       }
 
@@ -429,8 +447,9 @@ export function createAppStore(
       saveState(adapter, getPersistedSlice(get()));
     },
 
-    updateSettings(patch: Partial<Settings>): void {
+    updateSettings(patch: Partial<Settings>, now?: number): void {
       const { settings, sessions, tasks } = get();
+      const timestamp = now ?? Date.now();
       const newSettings: Settings = {
         ...settings,
         ...patch,
@@ -462,6 +481,7 @@ export function createAppStore(
 
       set({
         settings: newSettings,
+        settingsUpdatedAt: timestamp,
         sessions: nextSessions,
         tasks: nextTasks,
       });
@@ -483,6 +503,7 @@ export function createAppStore(
         tasks: importedState.tasks,
         sessions: importedState.sessions,
         settings: importedState.settings,
+        settingsUpdatedAt: importedState.settingsUpdatedAt,
         activeTimer: importedState.activeTimer,
         recovered: false,
       });
@@ -496,6 +517,7 @@ export function createAppStore(
         tasks: empty.tasks,
         sessions: empty.sessions,
         settings: empty.settings,
+        settingsUpdatedAt: empty.settingsUpdatedAt,
         activeTimer: empty.activeTimer,
         recovered: false,
         lastCompletion: null,
@@ -528,7 +550,9 @@ export function createAppStore(
         if (completesTask) {
           const dayKey = dayKeyFromTimestamp(now, loadedState.settings.dayStartHour);
           tasks = tasks.map((t) =>
-            t.id === activeTimer!.taskId ? { ...t, completedAt: now, completedDayKey: dayKey } : t
+            t.id === activeTimer!.taskId
+              ? { ...t, completedAt: now, completedDayKey: dayKey, updatedAt: now }
+              : t
           );
         }
         activeTimer = null;
@@ -538,6 +562,7 @@ export function createAppStore(
         tasks,
         sessions,
         settings: loadedState.settings,
+        settingsUpdatedAt: loadedState.settingsUpdatedAt,
         activeTimer,
         recovered,
         lastCompletion,
@@ -547,6 +572,7 @@ export function createAppStore(
         tasks,
         sessions,
         settings: loadedState.settings,
+        settingsUpdatedAt: loadedState.settingsUpdatedAt,
         activeTimer,
       });
     },
@@ -599,4 +625,5 @@ export const useAcknowledgeCompletion = () => useAppStore((s) => s.acknowledgeCo
 export const useTasks = () => useAppStore((s) => s.tasks);
 export const useSessions = () => useAppStore((s) => s.sessions);
 export const useSettings = () => useAppStore((s) => s.settings);
+export const useSettingsUpdatedAt = () => useAppStore((s) => s.settingsUpdatedAt);
 export const useActiveTimer = () => useAppStore((s) => s.activeTimer);

@@ -18,6 +18,7 @@ describe('platform/storage', () => {
           id: 'task-1',
           title: 'Math Study',
           createdAt: 1700000000000,
+          updatedAt: 1700000000000,
           dayKey: '2023-11-14',
           mode: 'stopwatch',
           targetMs: null,
@@ -67,10 +68,10 @@ describe('platform/storage', () => {
     }
   });
 
-  it("handles schemaVersion 0, 3, missing, 'x' -> defaults, recovered true", () => {
+  it("handles schemaVersion 0, 4, missing, 'x' -> defaults, recovered true", () => {
     const badVersions = [
       JSON.stringify({ ...emptyState(), schemaVersion: 0 }),
-      JSON.stringify({ ...emptyState(), schemaVersion: 3 }),
+      JSON.stringify({ ...emptyState(), schemaVersion: 4 }),
       JSON.stringify({ tasks: [], sessions: [], settings: DEFAULT_SETTINGS }),
       JSON.stringify({ ...emptyState(), schemaVersion: 'x' }),
     ];
@@ -88,6 +89,7 @@ describe('platform/storage', () => {
       id: 'task-1',
       title: 'Valid 1',
       createdAt: 1000,
+      updatedAt: 1000,
       dayKey: '1970-01-01',
       mode: 'stopwatch',
       targetMs: null,
@@ -102,6 +104,7 @@ describe('platform/storage', () => {
       id: 'task-2',
       title: 'Valid 2',
       createdAt: 2000,
+      updatedAt: 2000,
       dayKey: '1970-01-01',
       mode: 'countdown',
       targetMs: 1800000,
@@ -302,7 +305,7 @@ describe('platform/storage', () => {
     const loaded = loadState(adapter);
 
     expect(loaded.recovered).toBe(false);
-    expect(loaded.state.schemaVersion).toBe(2);
+    expect(loaded.state.schemaVersion).toBe(3);
     expect(loaded.state.tasks.length).toBe(1);
     expect(loaded.state.tasks[0]?.dayKey).toBe('2026-08-01');
   });

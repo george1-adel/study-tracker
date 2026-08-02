@@ -4,14 +4,17 @@ import { dayKeyFromTimestamp } from '../time/dayKey';
 
 export function makeTask(overrides: Partial<Task> = {}): Task {
   const createdAt = overrides.createdAt ?? 1_700_000_000_000;
+  const completedAt = overrides.completedAt ?? null;
+  const updatedAt = overrides.updatedAt ?? (completedAt ?? createdAt);
   return {
     id: 'task-1',
     title: 'Test Task',
     createdAt,
+    updatedAt,
     dayKey: overrides.dayKey ?? dayKeyFromTimestamp(createdAt, 0),
     mode: 'stopwatch',
     targetMs: null,
-    completedAt: null,
+    completedAt,
     completedDayKey: null,
     deletedAt: null,
     categoryId: null,

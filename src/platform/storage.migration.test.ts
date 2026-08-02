@@ -30,10 +30,12 @@ const V1 = JSON.stringify({
   activeTimer: null,
 });
 
-describe('v1 -> v2 upgrade of real deployed data', () => {
-  it('keeps every task and session, and derives dayKey from createdAt', () => {
+describe('v1 -> v3 upgrade of real deployed data', () => {
+  it('keeps every task and session, derives dayKey from createdAt, sets settingsUpdatedAt to 0, and sets task.updatedAt = completedAt ?? createdAt', () => {
     const { state, recovered } = loadState(createMemoryAdapter(V1));
     expect(recovered).toBe(false);            // an upgrade is NOT a data-loss recovery
+    expect(state.schemaVersion).toBe(3);
+    expect(state.settingsUpdatedAt).toBe(0);
     expect(state.tasks).toHaveLength(3);
     expect(state.sessions).toHaveLength(2);
     expect(state.tasks.map(t => t.title)).toEqual([
@@ -41,6 +43,10 @@ describe('v1 -> v2 upgrade of real deployed data', () => {
     expect(state.tasks[0]!.dayKey).toBe('2026-08-01');
     expect(state.tasks[1]!.dayKey).toBe('2026-08-01');
     expect(state.tasks[2]!.dayKey).toBe('2026-07-28');
+    // updatedAt derivations
+    expect(state.tasks[0]!.updatedAt).toBe(state.tasks[0]!.completedAt);
+    expect(state.tasks[1]!.updatedAt).toBe(state.tasks[1]!.completedAt);
+    expect(state.tasks[2]!.updatedAt).toBe(state.tasks[2]!.createdAt);
     // history untouched
     expect(state.sessions[0]!.dayKey).toBe('2026-08-01');
     expect(state.sessions[0]!.durationMs).toBe(5400000);
@@ -56,5 +62,33 @@ describe('v1 -> v2 upgrade of real deployed data', () => {
     expect(state.tasks).toHaveLength(3);
     expect(state.tasks[0]!.dayKey).toBe('2026-08-01');
     expect(state.tasks[1]!.dayKey).toBe('2026-08-01');
+  });
+
+  it('upgrades a v2 blob cleanly to v3 with settingsUpdatedAt = 0 and task.updatedAt = completedAt ?? createdAt', () => {
+    const v2 = JSON.parse(V1);
+    v2.schemaVersion = 2;
+    v2.tasks[0].dayKey = '2026-08-01';
+    v2.tasks[1].dayKey = '2026-08-01';
+    v2.tasks[2].dayKey = '2026-07-28';
+
+    const { state, recovered } = loadState(createMemoryAdapter(JSON.stringify(v2)));
+    expect(recovered).toBe(false);
+    expect(state.schemaVersion).toBe(3);
+    expect(state.settingsUpdatedAt).toBe(0);
+    expect(state.tasks[0]!.updatedAt).toBe(v2.tasks[0].completedAt);
+    expect(state.tasks[1]!.updatedAt).toBe(v2.tasks[1].completedAt);
+    expect(state.tasks[2]!.updatedAt).toBe(v2.tasks[2].createdAt);
+  });
+
+  it('repairs a v3 task whose updatedAt is missing or invalid', () => {
+    const v3 = JSON.parse(V1);
+    v3.schemaVersion = 3;
+    v3.settingsUpdatedAt = 1000;
+    v3.tasks[0].dayKey = '2026-08-01';
+    delete v3.tasks[0].updatedAt;
+
+    const { state, recovered } = loadState(createMemoryAdapter(JSON.stringify(v3)));
+    expect(recovered).toBe(true);
+    expect(state.tasks[0]!.updatedAt).toBe(v3.tasks[0].completedAt);
   });
 });

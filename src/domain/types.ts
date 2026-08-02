@@ -8,6 +8,7 @@ export interface Task {
   id: string;
   title: string;
   createdAt: number;
+  updatedAt: number;
   dayKey: DayKey;
   mode: TimerMode;
   targetMs: number | null;
@@ -70,10 +71,11 @@ export interface Settings {
 }
 
 export interface PersistedState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   tasks: Task[];
   sessions: Session[];
   settings: Settings;
+  settingsUpdatedAt: number;
   activeTimer: ActiveTimer | null;
 }
 
@@ -123,7 +125,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 };
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const STORAGE_KEY = 'study-tracker:v1';
 
 export function emptyState(): PersistedState {
@@ -137,6 +139,7 @@ export function emptyState(): PersistedState {
       sound: { ...DEFAULT_SETTINGS.sound },
       notifications: { ...DEFAULT_SETTINGS.notifications },
     },
+    settingsUpdatedAt: 0,
     activeTimer: null,
   };
 }
