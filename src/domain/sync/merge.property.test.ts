@@ -6,7 +6,6 @@ import type { Task, Session } from '../types';
 // Deterministic PRNG so a failure is reproducible.
 let seed = 1337;
 const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
-const pick = <T,>(a: T[]): T => a[Math.floor(rnd() * a.length)]!;
 
 const mkTask = (id: string, updatedAt: number): Task => ({
   id, title: 'task-' + id, createdAt: 1000, dayKey: '2026-08-01',

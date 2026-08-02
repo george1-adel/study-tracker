@@ -30,6 +30,8 @@ import {
   saveState,
 } from '../platform/storage';
 
+import type { SyncableState } from '../domain/sync/merge';
+
 export interface AppState {
   tasks: Task[];
   sessions: Session[];
@@ -56,6 +58,7 @@ export interface AppActions {
   importState(raw: string): boolean;
   resetAll(): void;
   rehydrateFromStorage(now: number): void;
+  applySyncedState(synced: SyncableState): void;
   clearLastCompletion(): void;
   acknowledgeCompletion(): void;
   clearRecovered(): void;
@@ -587,6 +590,16 @@ export function createAppStore(
 
     clearRecovered(): void {
       set({ recovered: false });
+    },
+
+    applySyncedState(synced: SyncableState): void {
+      set({
+        tasks: synced.tasks,
+        sessions: synced.sessions,
+        settings: synced.settings,
+        settingsUpdatedAt: synced.settingsUpdatedAt,
+      });
+      saveState(adapter, getPersistedSlice(get()));
     },
   }));
 }

@@ -7,9 +7,12 @@ import { DashboardPage } from './features/shell/DashboardPage';
 import { ProgressPage } from './features/shell/ProgressPage';
 import { AnalyticsPage } from './features/shell/AnalyticsPage';
 import { SettingsPage } from './features/shell/SettingsPage';
+import { useSyncEngine } from './platform/syncEngine';
 import './styles/global.css';
 
 export function App() {
+  useSyncEngine();
+
   useEffect(() => {
     useAppStore.getState().rehydrateFromStorage(Date.now());
     const cleanupTheme = initThemeAndDirection();

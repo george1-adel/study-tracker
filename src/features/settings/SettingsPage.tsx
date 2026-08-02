@@ -9,9 +9,30 @@ import { Toggle } from '../../components/Toggle';
 import { Modal } from '../../components/Modal';
 import { Toast } from '../../components/Toast';
 import { Ltr } from '../../components/Ltr';
+import { Input } from '../../components/Input';
 import { notify, requestPermission } from '../../platform/notify';
 import { dayKeyFromTimestamp } from '../../domain/time/dayKey';
 import { loadState, createMemoryAdapter } from '../../platform/storage';
+import { useSyncEngine } from '../../platform/syncEngine';
+import { createSyncClient } from '../../platform/sync';
+
+function formatRelativeTime(timestamp: number | null, t: ReturnType<typeof useT>): string {
+  if (!timestamp) return t('settings.sync.statusNever');
+  const elapsedMs = Math.max(0, Date.now() - timestamp);
+  const minutes = Math.floor(elapsedMs / 60000);
+  if (minutes < 1) {
+    return t('settings.sync.timeJustNow');
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 1) {
+    return t('settings.sync.timeMinutesAgo', { count: minutes });
+  }
+  const days = Math.floor(hours / 24);
+  if (days < 1) {
+    return t('settings.sync.timeHoursAgo', { count: hours });
+  }
+  return t('settings.sync.timeDaysAgo', { count: days });
+}
 
 function isValidDayStartHour(val: number): boolean {
   if (isNaN(val) || !Number.isInteger(val)) return false;
@@ -39,6 +60,65 @@ export function SettingsPage() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
   const resetAll = useAppStore((s) => s.resetAll);
+
+  // Sync engine state
+  const { config: syncConfig, meta: syncMeta, syncing, syncNow, updateConfig } = useSyncEngine();
+  const [syncUrlInput, setSyncUrlInput] = useState<string>(syncConfig.url);
+  const [syncPassphraseInput, setSyncPassphraseInput] = useState<string>(syncConfig.passphrase);
+
+  useEffect(() => {
+    setSyncUrlInput(syncConfig.url);
+    setSyncPassphraseInput(syncConfig.passphrase);
+  }, [syncConfig.url, syncConfig.passphrase]);
+
+  const handleSyncUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSyncUrlInput(val);
+    updateConfig({ url: val });
+  };
+
+  const handleSyncPassphraseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSyncPassphraseInput(val);
+    updateConfig({ passphrase: val });
+  };
+
+  const handleSyncEnableToggle = (checked: boolean) => {
+    updateConfig({ enabled: checked });
+  };
+
+  const handleSyncNowClick = async () => {
+    await syncNow();
+  };
+
+  const handleTestConnectionClick = async () => {
+    const client = createSyncClient({
+      url: syncUrlInput,
+      passphrase: syncPassphraseInput,
+      enabled: true,
+    });
+    const ok = await client.testConnection();
+    if (ok) {
+      setToastMessage(t('settings.sync.testSuccess'));
+      setToastType('success');
+    } else {
+      setToastMessage(t('settings.sync.testFailed'));
+      setToastType('error');
+    }
+  };
+
+  const renderSyncStatus = () => {
+    if (syncing) return t('settings.sync.statusSyncing');
+    if (!syncConfig.enabled) return t('settings.sync.statusOff');
+    if (syncMeta.lastError === 'unreachable') return t('settings.sync.errorUnreachable');
+    if (syncMeta.lastError === 'auth_error') return t('settings.sync.errorAuth');
+    if (syncMeta.lastError === 'conflict') return t('settings.sync.errorConflict');
+    if (syncMeta.lastError === 'error') return t('settings.sync.errorGeneric');
+    if (syncMeta.lastSyncedAt !== null) {
+      return t('settings.sync.statusSynced', { time: formatRelativeTime(syncMeta.lastSyncedAt, t) });
+    }
+    return t('settings.sync.statusNever');
+  };
 
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -562,6 +642,63 @@ export function SettingsPage() {
                 {t('settings.permissionMismatchNotice')}
               </div>
             )}
+          </div>
+        </div>
+      </Card>
+
+      {/* CROSS-DEVICE SYNC */}
+      <Card className="settings-section">
+        <h2 className="settings-section-title">{t('settings.sync.title')}</h2>
+        <div className="settings-field-hint" style={{ marginBlockEnd: 'var(--space-3)' }}>
+          {t('settings.sync.notice')}
+        </div>
+
+        <div className="settings-grid">
+          <Input
+            label={t('settings.sync.url')}
+            placeholder={t('settings.sync.urlPlaceholder')}
+            value={syncUrlInput}
+            onChange={handleSyncUrlChange}
+          />
+          <Input
+            type="password"
+            label={t('settings.sync.passphrase')}
+            placeholder={t('settings.sync.passphrasePlaceholder')}
+            value={syncPassphraseInput}
+            onChange={handleSyncPassphraseChange}
+          />
+        </div>
+
+        <div className="settings-grid" style={{ marginBlockStart: 'var(--space-3)' }}>
+          <Toggle
+            label={t('settings.sync.enable')}
+            checked={syncConfig.enabled}
+            onChange={handleSyncEnableToggle}
+          />
+          <div>
+            <div className="select-label">{t('settings.sync.syncNow')}</div>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBlockStart: 'var(--space-1)' }}>
+              <Button
+                variant="secondary"
+                onClick={handleSyncNowClick}
+                disabled={!syncConfig.enabled || syncing}
+              >
+                {t('settings.sync.syncNow')}
+              </Button>
+              <Button variant="secondary" onClick={handleTestConnectionClick}>
+                {t('settings.sync.testConnection')}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBlockStart: 'var(--space-3)' }}>
+          <div className="select-label" style={{ marginBlockEnd: 'var(--space-1)' }}>{t('settings.sync.statusLabel')}</div>
+          <div
+            className="settings-field-hint"
+            style={{ color: syncMeta.lastError ? 'var(--alarm)' : 'var(--text-muted)' }}
+          >
+            <Ltr>{renderSyncStatus()}</Ltr>
           </div>
         </div>
       </Card>
